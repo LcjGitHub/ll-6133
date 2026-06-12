@@ -1,0 +1,27 @@
+{
+  "name": "ferment-log-frontend",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "check": "svelte-check --tsconfig ./tsconfig.app.json"
+  },
+  "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "^5.0.3",
+    "@tsconfig/svelte": "^5.0.4",
+    "svelte": "^5.19.0",
+    "svelte-check": "^4.1.4",
+    "typescript": "^5.7.3",
+    "vite": "^6.0.7"
+  },
+  "dependencies": {
+    "@tanstack/svelte-query": "^5.66.0",
+    "axios": "^1.7.9",
+    "flowbite": "^2.5.2",
+    "flowbite-svelte": "^0.47.4",
+    "svelte-routing": "^2.13.0"
+  }
+}

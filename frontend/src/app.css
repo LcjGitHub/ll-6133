@@ -1,0 +1,7 @@
+@import 'flowbite/dist/flowbite.css';
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background-color: #f9fafb;
+}
