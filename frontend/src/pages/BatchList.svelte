@@ -62,6 +62,11 @@
   let fileInput: HTMLInputElement;
   let showImportResult = $state(false);
   let importResult = $state<ImportResult | null>(null);
+  let isExporting = $state(false);
+  let exportError = $state<string | null>(null);
+  let importError = $state<string | null>(null);
+  let isDragging = $state(false);
+  let selectedFileName = $state<string | null>(null);
 
   const importMutation_ = createMutation({
     mutationFn: importBatches,
@@ -69,24 +74,89 @@
       queryClient.invalidateQueries({ queryKey: ['batches'] });
       importResult = data;
       showImportResult = true;
+      importError = null;
+      exportError = null;
+      selectedFileName = null;
       if (fileInput) {
         fileInput.value = '';
       }
     },
+    onError: (err: Error) => {
+      importError = err.message;
+      showImportResult = false;
+      exportError = null;
+    },
   });
 
   /** 处理导出 */
-  function handleExport() {
-    exportBatches();
+  async function handleExport() {
+    isExporting = true;
+    exportError = null;
+    importError = null;
+    try {
+      await exportBatches();
+    } catch (err: any) {
+      exportError = err?.message ?? '导出失败，请稍后重试';
+    } finally {
+      isExporting = false;
+    }
   }
 
-  /** 处理文件选择 */
+  /** 触发文件选择对话框 */
+  function triggerFileSelect() {
+    if (fileInput && !$importMutation_.isPending) {
+      fileInput.click();
+    }
+  }
+
+  /** 统一处理文件选择 */
+  function processFile(file: File) {
+    selectedFileName = file.name;
+    showImportResult = false;
+    importError = null;
+    exportError = null;
+    $importMutation_.mutate(file);
+  }
+
+  /** 处理 input 文件选择 */
   function handleFileSelect(e: Event) {
     const target = e.target as HTMLInputElement;
     const file = target.files?.[0];
     if (file) {
-      showImportResult = false;
-      $importMutation_.mutate(file);
+      processFile(file);
+    }
+  }
+
+  /** 处理拖拽进入 */
+  function handleDragEnter(e: DragEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!$importMutation_.isPending) {
+      isDragging = true;
+    }
+  }
+
+  /** 处理拖拽离开 */
+  function handleDragLeave(e: DragEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    isDragging = false;
+  }
+
+  /** 处理拖拽悬停 */
+  function handleDragOver(e: DragEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+
+  /** 处理文件拖拽放下 */
+  function handleDrop(e: DragEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    isDragging = false;
+    const file = e.dataTransfer?.files?.[0];
+    if (file && !$importMutation_.isPending) {
+      processFile(file);
     }
   }
 
@@ -107,30 +177,93 @@
 </script>
 
 <div class="space-y-6">
-  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+  <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
     <h2 class="text-lg font-semibold text-gray-800">批次列表</h2>
-    <div class="flex flex-wrap gap-2">
-      <Button color="green" onclick={handleExport}>
-        📤 导出数据
+    <div class="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:flex-wrap">
+      <Button color="green" onclick={handleExport} disabled={isExporting || $importMutation_.isPending}>
+        {#if isExporting}
+          <span class="inline-flex items-center gap-2">
+            <Spinner size="4" />
+            导出中…
+          </span>
+        {:else}
+          📤 导出数据
+        {/if}
       </Button>
-      <label class="cursor-pointer">
+
+      <div class="flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2 shadow-sm">
+        <label
+          for="batch-import-file"
+          class="cursor-pointer inline-flex items-center gap-2 text-sm font-medium text-purple-700 hover:text-purple-800"
+        >
+          📥 选择文件导入
+        </label>
         <input
+          id="batch-import-file"
           bind:this={fileInput}
           type="file"
           accept=".xlsx,.xls"
           class="hidden"
           onchange={handleFileSelect}
-          disabled={$importMutation_.isPending}
+          disabled={$importMutation_.isPending || isExporting}
         />
-        <Button color="purple" disabled={$importMutation_.isPending}>
-          {$importMutation_.isPending ? '导入中…' : '📥 导入数据'}
-        </Button>
-      </label>
+        <span class="text-xs text-gray-500">
+          {#if $importMutation_.isPending}
+            <span class="inline-flex items-center gap-1">
+              <Spinner size="3" />
+              导入中…
+            </span>
+          {:else if selectedFileName}
+            已选：{selectedFileName}
+          {:else}
+            支持 .xlsx
+          {/if}
+        </span>
+      </div>
+
       <Button color="blue" onclick={() => (showForm = !showForm)}>
         {showForm ? '取消' : '+ 新建批次'}
       </Button>
     </div>
   </div>
+
+  <div
+    class="cursor-pointer rounded-lg border-2 border-dashed p-5 text-center transition-colors {isDragging
+      ? 'border-purple-500 bg-purple-50'
+      : $importMutation_.isPending
+        ? 'border-gray-200 bg-gray-100 cursor-not-allowed'
+        : 'border-gray-300 bg-gray-50 hover:border-purple-400 hover:bg-purple-50/50'}"
+    onclick={triggerFileSelect}
+    ondragenter={handleDragEnter}
+    ondragleave={handleDragLeave}
+    ondragover={handleDragOver}
+    ondrop={handleDrop}
+  >
+    <div class="flex flex-col items-center gap-2 text-gray-600">
+      <div class="text-2xl">📂</div>
+      <div class="text-sm font-medium">
+        {#if $importMutation_.isPending}
+          <span class="inline-flex items-center gap-2">
+            <Spinner size="4" />
+            正在导入，请稍候…
+          </span>
+        {:else if selectedFileName}
+          已选择文件：{selectedFileName}
+        {:else}
+          点击选择文件或将 Excel 文件拖拽到此处（支持 .xlsx 格式）
+        {/if}
+      </div>
+      <div class="text-xs text-gray-500">可导入批次及关联笔记数据，重复编号将自动跳过</div>
+    </div>
+  </div>
+
+  {#if exportError}
+    <Alert color="red">导出失败：{exportError}</Alert>
+  {/if}
+
+  {#if importError}
+    <Alert color="red">导入失败：{importError}</Alert>
+  {/if}
 
   {#if showImportResult && importResult}
     <Alert color="green" class="space-y-1">
@@ -144,7 +277,7 @@
     </Alert>
   {/if}
 
-  {#if $importMutation_.isError}
+  {#if $importMutation_.isError && !importError}
     <Alert color="red">
       导入失败：{$importMutation_.error?.message ?? '请检查文件格式是否正确'}
     </Alert>

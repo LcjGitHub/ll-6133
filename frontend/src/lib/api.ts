@@ -156,36 +156,78 @@ export async function deleteReminder(id: number): Promise<void> {
   await api.delete(`/reminders/${id}`);
 }
 
+/** 从任意错误响应中提取后端中文错误信息 */
+async function extractErrorDetail(error: any): Promise<string> {
+  const response = error?.response;
+  if (!response) return error?.message ?? '请求失败，请稍后重试';
+
+  let data = response.data;
+
+  if (data instanceof Blob) {
+    try {
+      const text = await data.text();
+      data = JSON.parse(text);
+    } catch {
+      if (response.statusText) return `请求失败 (${response.status}: ${response.statusText})`;
+      return error?.message ?? '请求失败，请稍后重试';
+    }
+  }
+
+  if (typeof data?.detail === 'string') return data.detail;
+
+  if (Array.isArray(data?.detail) && data.detail.length > 0) {
+    const first = data.detail[0];
+    if (typeof first === 'string') return first;
+    if (first?.msg) return first.msg;
+    if (first?.message) return first.message;
+  }
+
+  if (data?.message && typeof data.message === 'string') return data.message;
+  if (data?.error && typeof data.error === 'string') return data.error;
+  if (response.statusText) return `请求失败 (${response.status}: ${response.statusText})`;
+  return error?.message ?? '请求失败，请稍后重试';
+}
+
 /** 导出全部批次及笔记 Excel 文件 */
 export async function exportBatches(): Promise<void> {
-  const response = await api.get('/batches/export', {
-    responseType: 'blob',
-  });
-  const contentDisposition = response.headers['content-disposition'] ?? '';
-  const match = contentDisposition.match(/filename="?([^";]+)"?/);
-  const filename = match ? match[1] : 'ferment_batches_export.xlsx';
-  const url = window.URL.createObjectURL(new Blob([response.data]));
-  const link = document.createElement('a');
-  link.href = url;
-  link.setAttribute('download', filename);
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  window.URL.revokeObjectURL(url);
+  try {
+    const response = await api.get('/batches/export', {
+      responseType: 'blob',
+    });
+    const contentDisposition = response.headers['content-disposition'] ?? '';
+    const match = contentDisposition.match(/filename="?([^";]+)"?/);
+    const filename = match ? match[1] : 'ferment_batches_export.xlsx';
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', filename);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  } catch (error: any) {
+    const message = await extractErrorDetail(error);
+    throw new Error(message);
+  }
 }
 
 /** 从 Excel 文件导入批次及笔记 */
 export async function importBatches(file: File): Promise<ImportResult> {
   const formData = new FormData();
   formData.append('file', file);
-  const { data } = await api.post<ImportResult>(
-    '/batches/import',
-    formData,
-    {
-      headers: {
-        'Content-Type': 'multipart/form-data',
+  try {
+    const { data } = await api.post<ImportResult>(
+      '/batches/import',
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
       },
-    },
-  );
-  return data;
+    );
+    return data;
+  } catch (error: any) {
+    const message = await extractErrorDetail(error);
+    throw new Error(message);
+  }
 }
