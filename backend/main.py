@@ -3,7 +3,7 @@
 from datetime import datetime, timedelta
 from io import BytesIO
 
-from fastapi import Depends, FastAPI, File, HTTPException, UploadFile
+from fastapi import Depends, FastAPI, File, HTTPException, Query, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from openpyxl import Workbook, load_workbook
@@ -54,9 +54,18 @@ def health():
 
 
 @app.get("/api/batches", response_model=list[schemas.BatchOut])
-def list_batches(db: Session = Depends(get_db)):
-    """获取全部批次。"""
-    return db.query(models.Batch).order_by(models.Batch.start_date.desc()).all()
+def list_batches(
+    status: str | None = Query(None, description="按发酵状态筛选"),
+    type: str | None = Query(None, description="按批次类型筛选"),
+    db: Session = Depends(get_db),
+):
+    """获取全部批次，可按状态和类型筛选。"""
+    query = db.query(models.Batch)
+    if status:
+        query = query.filter(models.Batch.status == status)
+    if type:
+        query = query.filter(models.Batch.type == type)
+    return query.order_by(models.Batch.start_date.desc()).all()
 
 
 @app.post("/api/batches", response_model=schemas.BatchOut, status_code=201)

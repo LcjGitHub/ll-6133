@@ -28,7 +28,7 @@
 
   const batchesQuery = createQuery({
     queryKey: ['batches'],
-    queryFn: fetchBatches,
+    queryFn: () => fetchBatches(),
   });
 
   let showForm = $state(false);
