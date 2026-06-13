@@ -169,7 +169,7 @@ export async function deleteReminder(id: number): Promise<void> {
 }
 
 /** 从任意错误响应中提取后端中文错误信息 */
-async function extractErrorDetail(error: any): Promise<string> {
+export async function extractErrorDetail(error: any): Promise<string> {
   const response = error?.response;
   if (!response) return error?.message ?? '请求失败，请稍后重试';
 

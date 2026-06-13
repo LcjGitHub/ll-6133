@@ -12,7 +12,7 @@
     Alert,
     Card,
   } from 'flowbite-svelte';
-  import { fetchBatch, updateBatch, createNote, deleteNote, updateNote, createMeasurement } from '../lib/api';
+  import { fetchBatch, updateBatch, createNote, deleteNote, updateNote, createMeasurement, extractErrorDetail } from '../lib/api';
   import type { BatchForm, MeasurementForm } from '../lib/types';
 
   interface Props {
@@ -32,10 +32,13 @@
     enabled: isValidId,
   });
 
+  const NOTE_MAX_LENGTH = 2000;
+
   let editMode = $state(false);
   let noteContent = $state('');
   let editingNoteId = $state<number | null>(null);
   let editingNoteContent = $state('');
+  let updateNoteError = $state<string>('');
 
   function defaultMeasurementForm(): MeasurementForm {
     const now = new Date();
@@ -103,17 +106,23 @@
       queryClient.invalidateQueries({ queryKey: ['batch', id] });
       editingNoteId = null;
       editingNoteContent = '';
+      updateNoteError = '';
+    },
+    onError: async (error) => {
+      updateNoteError = await extractErrorDetail(error);
     },
   });
 
   function startEditNote(noteId: number, content: string) {
     editingNoteId = noteId;
     editingNoteContent = content;
+    updateNoteError = '';
   }
 
   function cancelEditNote() {
     editingNoteId = null;
     editingNoteContent = '';
+    updateNoteError = '';
   }
 
   function handleSaveNote(e: Event) {
@@ -121,6 +130,7 @@
     if (editingNoteId === null) return;
     const trimmed = editingNoteContent.trim();
     if (!trimmed) return;
+    if (trimmed.length > NOTE_MAX_LENGTH) return;
     $updateNoteMutation_.mutate({ noteId: editingNoteId, content: trimmed });
   }
 
@@ -380,6 +390,9 @@
             <li class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
               {#if editingNoteId === note.id}
                 <form onsubmit={handleSaveNote} class="space-y-3">
+                  {#if updateNoteError}
+                    <Alert color="red">{updateNoteError}</Alert>
+                  {/if}
                   <div class="flex items-start justify-between gap-2">
                     <time class="text-xs text-gray-400">{formatTime(note.created_at)}</time>
                     <div class="flex gap-2">
@@ -387,7 +400,7 @@
                         size="xs"
                         color="blue"
                         type="submit"
-                        disabled={$updateNoteMutation_.isPending || !editingNoteContent.trim()}
+                        disabled={$updateNoteMutation_.isPending || !editingNoteContent.trim() || editingNoteContent.trim().length > NOTE_MAX_LENGTH}
                       >
                         {$updateNoteMutation_.isPending ? '保存中…' : '保存'}
                       </Button>
@@ -406,7 +419,15 @@
                     bind:value={editingNoteContent}
                     rows={3}
                     autofocus
+                    maxlength={NOTE_MAX_LENGTH}
                   />
+                  <div class="text-right text-xs">
+                    {#if editingNoteContent.trim().length > NOTE_MAX_LENGTH}
+                      <span class="text-red-500">字数超限（{editingNoteContent.trim().length}/{NOTE_MAX_LENGTH}）</span>
+                    {:else}
+                      <span class="text-gray-400">{editingNoteContent.trim().length}/{NOTE_MAX_LENGTH}</span>
+                    {/if}
+                  </div>
                 </form>
               {:else}
                 <div class="mb-2 flex items-start justify-between gap-2">
