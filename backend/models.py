@@ -27,7 +27,10 @@ class Batch(Base):
         "Note", back_populates="batch", cascade="all, delete-orphan"
     )
     measurements: Mapped[list["Measurement"]] = relationship(
-        "Measurement", back_populates="batch", cascade="all, delete-orphan"
+        "Measurement",
+        back_populates="batch",
+        cascade="all, delete-orphan",
+        order_by="Measurement.recorded_at.desc()",
     )
 
 

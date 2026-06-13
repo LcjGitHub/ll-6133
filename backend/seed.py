@@ -58,22 +58,24 @@ def seed_data(db: Session) -> None:
 
         db.add_all(notes)
 
-        measurements = [
-            Measurement(
-                batch_id=batches[0].id,
-                recorded_at=datetime(2026, 5, 22, 10, 30),
-                temperature=25.5,
-                ph=3.8,
-            ),
-            Measurement(
-                batch_id=batches[0].id,
-                recorded_at=datetime(2026, 5, 25, 9, 15),
-                temperature=26.2,
-                ph=3.4,
-            ),
-        ]
-
-        db.add_all(measurements)
+    if db.query(Measurement).count() == 0:
+        first_batch = db.query(Batch).order_by(Batch.id.asc()).first()
+        if first_batch:
+            measurements = [
+                Measurement(
+                    batch_id=first_batch.id,
+                    recorded_at=datetime(2026, 5, 22, 10, 30),
+                    temperature=25.5,
+                    ph=3.8,
+                ),
+                Measurement(
+                    batch_id=first_batch.id,
+                    recorded_at=datetime(2026, 5, 25, 9, 15),
+                    temperature=26.2,
+                    ph=3.4,
+                ),
+            ]
+            db.add_all(measurements)
 
     if db.query(Recipe).count() == 0:
         recipes = [
