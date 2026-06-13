@@ -92,3 +92,20 @@ export interface Statistics {
   type_counts: Record<string, number>;
   recent_notes_count: number;
 }
+
+/** 提醒待办 */
+export interface Reminder {
+  id: number;
+  batch_id: number;
+  title: string;
+  reminder_date: string;
+  completed: boolean;
+  created_at: string;
+}
+
+/** 创建/更新提醒表单 */
+export interface ReminderForm {
+  batch_id: number;
+  title: string;
+  reminder_date: string;
+}

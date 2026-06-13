@@ -2,7 +2,7 @@
 
 from datetime import date, datetime
 
-from sqlalchemy import Date, DateTime, Float, ForeignKey, Integer, String, Text
+from sqlalchemy import Boolean, Date, DateTime, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from database import Base
@@ -31,6 +31,9 @@ class Batch(Base):
         back_populates="batch",
         cascade="all, delete-orphan",
         order_by="Measurement.recorded_at.desc()",
+    )
+    reminders: Mapped[list["Reminder"]] = relationship(
+        "Reminder", back_populates="batch", cascade="all, delete-orphan"
     )
 
 
@@ -104,3 +107,22 @@ class Measurement(Base):
     )
 
     batch: Mapped["Batch"] = relationship("Batch", back_populates="measurements")
+
+
+class Reminder(Base):
+    """发酵提醒待办。"""
+
+    __tablename__ = "reminders"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    batch_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("batches.id", ondelete="CASCADE"), nullable=False
+    )
+    title: Mapped[str] = mapped_column(String(200), nullable=False)
+    reminder_date: Mapped[date] = mapped_column(Date, nullable=False)
+    completed: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, nullable=False
+    )
+
+    batch: Mapped["Batch"] = relationship("Batch", back_populates="reminders")

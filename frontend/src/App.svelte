@@ -6,12 +6,14 @@
   import RecipeList from './pages/RecipeList.svelte';
   import RecipeDetail from './pages/RecipeDetail.svelte';
   import Overview from './pages/Overview.svelte';
+  import ReminderList from './pages/ReminderList.svelte';
   import {
     initRouter,
     parseBatchId,
     parseRecipeId,
     isRecipeList,
     isOverview,
+    isReminderList,
     pathname,
     navigate,
   } from './lib/router';
@@ -37,6 +39,10 @@
 
   function isOverviewActive(path: string): boolean {
     return isOverview(path);
+  }
+
+  function isRemindersActive(path: string): boolean {
+    return isReminderList(path);
   }
 </script>
 
@@ -80,6 +86,17 @@
             >
               配方管理
             </button>
+            <button
+              class={
+                'rounded-lg px-3 py-2 text-sm font-medium transition-colors ' +
+                (isRemindersActive($pathname)
+                  ? 'bg-amber-100 text-amber-700'
+                  : 'text-gray-600 hover:bg-gray-100')
+              }
+              onclick={() => navigate('/reminders')}
+            >
+              提醒待办
+            </button>
           </nav>
         </div>
       </div>
@@ -88,6 +105,8 @@
     <main class="mx-auto max-w-5xl px-4 py-6">
       {#if isOverview($pathname)}
         <Overview />
+      {:else if isReminderList($pathname)}
+        <ReminderList />
       {:else if parseRecipeId($pathname)}
         {#key parseRecipeId($pathname)}
           <RecipeDetail id={parseRecipeId($pathname)!} />

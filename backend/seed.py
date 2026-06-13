@@ -4,7 +4,7 @@ from datetime import date, datetime
 
 from sqlalchemy.orm import Session
 
-from models import Batch, Note, Recipe, RecipeStep, Measurement
+from models import Batch, Note, Recipe, RecipeStep, Measurement, Reminder
 
 
 def seed_data(db: Session) -> None:
@@ -163,5 +163,24 @@ def seed_data(db: Session) -> None:
         ]
 
         db.add_all(recipe_steps)
+
+    if db.query(Reminder).count() == 0:
+        batches_for_reminders = db.query(Batch).order_by(Batch.id.asc()).limit(2).all()
+        if len(batches_for_reminders) >= 2:
+            reminders = [
+                Reminder(
+                    batch_id=batches_for_reminders[0].id,
+                    title="测量康普茶 pH 值",
+                    reminder_date=date(2026, 6, 15),
+                    completed=False,
+                ),
+                Reminder(
+                    batch_id=batches_for_reminders[1].id,
+                    title="检查泡菜发酵状态并翻坛",
+                    reminder_date=date(2026, 6, 18),
+                    completed=False,
+                ),
+            ]
+            db.add_all(reminders)
 
     db.commit()

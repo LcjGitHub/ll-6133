@@ -61,3 +61,11 @@ export function isRecipeList(path: string): boolean {
 export function isOverview(path: string): boolean {
   return path === '/overview';
 }
+
+/**
+ * 判断是否为提醒列表页。
+ * @param path - 当前路径
+ */
+export function isReminderList(path: string): boolean {
+  return path === '/reminders';
+}

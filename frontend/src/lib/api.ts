@@ -9,6 +9,8 @@ import type {
   Recipe,
   RecipeDetail,
   RecipeForm,
+  Reminder,
+  ReminderForm,
   Statistics,
 } from './types';
 
@@ -119,4 +121,36 @@ export async function deleteRecipe(id: number): Promise<void> {
 export async function fetchStatistics(): Promise<Statistics> {
   const { data } = await api.get<Statistics>('/statistics');
   return data;
+}
+
+/** 获取全部提醒 */
+export async function fetchReminders(): Promise<Reminder[]> {
+  const { data } = await api.get<Reminder[]>('/reminders');
+  return data;
+}
+
+/** 创建提醒 */
+export async function createReminder(payload: ReminderForm): Promise<Reminder> {
+  const { data } = await api.post<Reminder>('/reminders', payload);
+  return data;
+}
+
+/** 更新提醒 */
+export async function updateReminder(
+  id: number,
+  payload: Partial<ReminderForm>,
+): Promise<Reminder> {
+  const { data } = await api.put<Reminder>(`/reminders/${id}`, payload);
+  return data;
+}
+
+/** 切换提醒完成状态 */
+export async function toggleReminderCompleted(id: number): Promise<Reminder> {
+  const { data } = await api.patch<Reminder>(`/reminders/${id}/toggle`);
+  return data;
+}
+
+/** 删除提醒 */
+export async function deleteReminder(id: number): Promise<void> {
+  await api.delete(`/reminders/${id}`);
 }

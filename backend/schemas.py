@@ -154,3 +154,33 @@ class StatisticsOut(BaseModel):
     status_counts: dict[str, int]
     type_counts: dict[str, int]
     recent_notes_count: int
+
+
+class ReminderCreate(BaseModel):
+    """创建提醒请求体。"""
+
+    batch_id: int = Field(..., ge=1)
+    title: str = Field(..., min_length=1, max_length=200)
+    reminder_date: date
+
+
+class ReminderUpdate(BaseModel):
+    """更新提醒请求体。"""
+
+    batch_id: int | None = Field(None, ge=1)
+    title: str | None = Field(None, min_length=1, max_length=200)
+    reminder_date: date | None = None
+    completed: bool | None = None
+
+
+class ReminderOut(BaseModel):
+    """提醒响应。"""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    batch_id: int
+    title: str
+    reminder_date: date
+    completed: bool
+    created_at: datetime
