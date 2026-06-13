@@ -12,6 +12,7 @@ import type {
   Reminder,
   ReminderForm,
   Statistics,
+  ImportResult,
 } from './types';
 
 const api = axios.create({
@@ -153,4 +154,38 @@ export async function toggleReminderCompleted(id: number): Promise<Reminder> {
 /** 删除提醒 */
 export async function deleteReminder(id: number): Promise<void> {
   await api.delete(`/reminders/${id}`);
+}
+
+/** 导出全部批次及笔记 Excel 文件 */
+export async function exportBatches(): Promise<void> {
+  const response = await api.get('/batches/export', {
+    responseType: 'blob',
+  });
+  const contentDisposition = response.headers['content-disposition'] ?? '';
+  const match = contentDisposition.match(/filename="?([^";]+)"?/);
+  const filename = match ? match[1] : 'ferment_batches_export.xlsx';
+  const url = window.URL.createObjectURL(new Blob([response.data]));
+  const link = document.createElement('a');
+  link.href = url;
+  link.setAttribute('download', filename);
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(url);
+}
+
+/** 从 Excel 文件导入批次及笔记 */
+export async function importBatches(file: File): Promise<ImportResult> {
+  const formData = new FormData();
+  formData.append('file', file);
+  const { data } = await api.post<ImportResult>(
+    '/batches/import',
+    formData,
+    {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    },
+  );
+  return data;
 }

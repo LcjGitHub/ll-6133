@@ -184,3 +184,14 @@ class ReminderOut(BaseModel):
     reminder_date: date
     completed: bool
     created_at: datetime
+
+
+class ImportResult(BaseModel):
+    """数据导入结果。"""
+
+    inserted_batches: int
+    skipped_batches: int
+    inserted_notes: int
+    skipped_notes: int
+    total_batches_in_file: int
+    total_notes_in_file: int

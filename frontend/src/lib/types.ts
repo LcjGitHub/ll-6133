@@ -109,3 +109,13 @@ export interface ReminderForm {
   title: string;
   reminder_date: string;
 }
+
+/** 数据导入结果 */
+export interface ImportResult {
+  inserted_batches: number;
+  skipped_batches: number;
+  inserted_notes: number;
+  skipped_notes: number;
+  total_batches_in_file: number;
+  total_notes_in_file: number;
+}

@@ -16,8 +16,8 @@
     Spinner,
     Alert,
   } from 'flowbite-svelte';
-  import { fetchBatches, createBatch, deleteBatch } from '../lib/api';
-  import type { BatchForm } from '../lib/types';
+  import { fetchBatches, createBatch, deleteBatch, exportBatches, importBatches } from '../lib/api';
+  import type { BatchForm, ImportResult } from '../lib/types';
 
   const queryClient = useQueryClient();
 
@@ -59,6 +59,37 @@
     },
   });
 
+  let fileInput: HTMLInputElement;
+  let showImportResult = $state(false);
+  let importResult = $state<ImportResult | null>(null);
+
+  const importMutation_ = createMutation({
+    mutationFn: importBatches,
+    onSuccess: (data: ImportResult) => {
+      queryClient.invalidateQueries({ queryKey: ['batches'] });
+      importResult = data;
+      showImportResult = true;
+      if (fileInput) {
+        fileInput.value = '';
+      }
+    },
+  });
+
+  /** 处理导出 */
+  function handleExport() {
+    exportBatches();
+  }
+
+  /** 处理文件选择 */
+  function handleFileSelect(e: Event) {
+    const target = e.target as HTMLInputElement;
+    const file = target.files?.[0];
+    if (file) {
+      showImportResult = false;
+      $importMutation_.mutate(file);
+    }
+  }
+
   /** 提交新建批次 */
   function handleSubmit(e: Event) {
     e.preventDefault();
@@ -76,12 +107,48 @@
 </script>
 
 <div class="space-y-6">
-  <div class="flex items-center justify-between">
+  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
     <h2 class="text-lg font-semibold text-gray-800">批次列表</h2>
-    <Button color="blue" onclick={() => (showForm = !showForm)}>
-      {showForm ? '取消' : '+ 新建批次'}
-    </Button>
+    <div class="flex flex-wrap gap-2">
+      <Button color="green" onclick={handleExport}>
+        📤 导出数据
+      </Button>
+      <label class="cursor-pointer">
+        <input
+          bind:this={fileInput}
+          type="file"
+          accept=".xlsx,.xls"
+          class="hidden"
+          onchange={handleFileSelect}
+          disabled={$importMutation_.isPending}
+        />
+        <Button color="purple" disabled={$importMutation_.isPending}>
+          {$importMutation_.isPending ? '导入中…' : '📥 导入数据'}
+        </Button>
+      </label>
+      <Button color="blue" onclick={() => (showForm = !showForm)}>
+        {showForm ? '取消' : '+ 新建批次'}
+      </Button>
+    </div>
   </div>
+
+  {#if showImportResult && importResult}
+    <Alert color="green" class="space-y-1">
+      <div class="font-medium">导入完成！</div>
+      <div class="text-sm">
+        批次：新增 {importResult.inserted_batches} 条，跳过 {importResult.skipped_batches} 条（共 {importResult.total_batches_in_file} 条）
+      </div>
+      <div class="text-sm">
+        笔记：新增 {importResult.inserted_notes} 条，跳过 {importResult.skipped_notes} 条（共 {importResult.total_notes_in_file} 条）
+      </div>
+    </Alert>
+  {/if}
+
+  {#if $importMutation_.isError}
+    <Alert color="red">
+      导入失败：{$importMutation_.error?.message ?? '请检查文件格式是否正确'}
+    </Alert>
+  {/if}
 
   {#if showForm}
     <form
