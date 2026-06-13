@@ -66,6 +66,15 @@ export async function createNote(
   return data;
 }
 
+/** 更新笔记 */
+export async function updateNote(
+  noteId: number,
+  content: string,
+): Promise<Note> {
+  const { data } = await api.put<Note>(`/notes/${noteId}`, { content });
+  return data;
+}
+
 /** 删除笔记 */
 export async function deleteNote(noteId: number): Promise<void> {
   await api.delete(`/notes/${noteId}`);

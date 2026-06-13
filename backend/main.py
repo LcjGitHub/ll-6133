@@ -325,6 +325,23 @@ def create_note(
     return note
 
 
+@app.put("/api/notes/{note_id}", response_model=schemas.NoteOut)
+def update_note(
+    note_id: int,
+    payload: schemas.NoteUpdate,
+    db: Session = Depends(get_db),
+):
+    """更新笔记内容。"""
+    note = db.query(models.Note).filter(models.Note.id == note_id).first()
+    if not note:
+        raise HTTPException(status_code=404, detail="笔记不存在")
+
+    note.content = payload.content
+    db.commit()
+    db.refresh(note)
+    return note
+
+
 @app.delete("/api/notes/{note_id}", status_code=204)
 def delete_note(note_id: int, db: Session = Depends(get_db)):
     """删除笔记。"""

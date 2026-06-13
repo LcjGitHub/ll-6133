@@ -12,7 +12,7 @@
     Alert,
     Card,
   } from 'flowbite-svelte';
-  import { fetchBatch, updateBatch, createNote, deleteNote, createMeasurement } from '../lib/api';
+  import { fetchBatch, updateBatch, createNote, deleteNote, updateNote, createMeasurement } from '../lib/api';
   import type { BatchForm, MeasurementForm } from '../lib/types';
 
   interface Props {
@@ -34,6 +34,8 @@
 
   let editMode = $state(false);
   let noteContent = $state('');
+  let editingNoteId = $state<number | null>(null);
+  let editingNoteContent = $state('');
 
   function defaultMeasurementForm(): MeasurementForm {
     const now = new Date();
@@ -93,6 +95,34 @@
       queryClient.invalidateQueries({ queryKey: ['batch', id] });
     },
   });
+
+  const updateNoteMutation_ = createMutation({
+    mutationFn: ({ noteId, content }: { noteId: number; content: string }) =>
+      updateNote(noteId, content),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['batch', id] });
+      editingNoteId = null;
+      editingNoteContent = '';
+    },
+  });
+
+  function startEditNote(noteId: number, content: string) {
+    editingNoteId = noteId;
+    editingNoteContent = content;
+  }
+
+  function cancelEditNote() {
+    editingNoteId = null;
+    editingNoteContent = '';
+  }
+
+  function handleSaveNote(e: Event) {
+    e.preventDefault();
+    if (editingNoteId === null) return;
+    const trimmed = editingNoteContent.trim();
+    if (!trimmed) return;
+    $updateNoteMutation_.mutate({ noteId: editingNoteId, content: trimmed });
+  }
 
   const measurementMutation_ = createMutation({
     mutationFn: (payload: MeasurementForm) => createMeasurement(numericId, payload),
@@ -348,23 +378,65 @@
         <ul class="space-y-3">
           {#each batch.notes as note (note.id)}
             <li class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-              <div class="mb-2 flex items-start justify-between gap-2">
-                <time class="text-xs text-gray-400">{formatTime(note.created_at)}</time>
-                <Button
-                  size="xs"
-                  color="red"
-                  outline
-                  disabled={$deleteNoteMutation_.isPending}
-                  onclick={() => {
-                    if (confirm('确定删除这条笔记？')) {
-                      $deleteNoteMutation_.mutate(note.id);
-                    }
-                  }}
-                >
-                  删除
-                </Button>
-              </div>
-              <p class="whitespace-pre-wrap text-gray-700">{note.content}</p>
+              {#if editingNoteId === note.id}
+                <form onsubmit={handleSaveNote} class="space-y-3">
+                  <div class="flex items-start justify-between gap-2">
+                    <time class="text-xs text-gray-400">{formatTime(note.created_at)}</time>
+                    <div class="flex gap-2">
+                      <Button
+                        size="xs"
+                        color="blue"
+                        type="submit"
+                        disabled={$updateNoteMutation_.isPending || !editingNoteContent.trim()}
+                      >
+                        {$updateNoteMutation_.isPending ? '保存中…' : '保存'}
+                      </Button>
+                      <Button
+                        size="xs"
+                        color="light"
+                        type="button"
+                        onclick={cancelEditNote}
+                        disabled={$updateNoteMutation_.isPending}
+                      >
+                        取消
+                      </Button>
+                    </div>
+                  </div>
+                  <Textarea
+                    bind:value={editingNoteContent}
+                    rows={3}
+                    autofocus
+                  />
+                </form>
+              {:else}
+                <div class="mb-2 flex items-start justify-between gap-2">
+                  <time class="text-xs text-gray-400">{formatTime(note.created_at)}</time>
+                  <div class="flex gap-2">
+                    <Button
+                      size="xs"
+                      color="light"
+                      onclick={() => startEditNote(note.id, note.content)}
+                      disabled={$deleteNoteMutation_.isPending || editingNoteId !== null}
+                    >
+                      编辑
+                    </Button>
+                    <Button
+                      size="xs"
+                      color="red"
+                      outline
+                      disabled={$deleteNoteMutation_.isPending || editingNoteId !== null}
+                      onclick={() => {
+                        if (confirm('确定删除这条笔记？')) {
+                          $deleteNoteMutation_.mutate(note.id);
+                        }
+                      }}
+                    >
+                      删除
+                    </Button>
+                  </div>
+                </div>
+                <p class="whitespace-pre-wrap text-gray-700">{note.content}</p>
+              {/if}
             </li>
           {/each}
         </ul>

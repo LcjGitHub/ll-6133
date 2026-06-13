@@ -11,6 +11,12 @@ class NoteCreate(BaseModel):
     content: str = Field(..., min_length=1, max_length=2000)
 
 
+class NoteUpdate(BaseModel):
+    """更新笔记请求体。"""
+
+    content: str = Field(..., min_length=1, max_length=2000)
+
+
 class NoteOut(BaseModel):
     """笔记响应。"""
 
