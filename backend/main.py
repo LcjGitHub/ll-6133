@@ -231,7 +231,9 @@ def get_statistics(db: Session = Depends(get_db)):
         .all()
     )
 
-    seven_days_ago = datetime.utcnow() - timedelta(days=7)
+    now_local = datetime.now()
+    seven_days_ago_date = now_local.date() - timedelta(days=7)
+    seven_days_ago = datetime.combine(seven_days_ago_date, datetime.min.time())
     recent_notes_count = (
         db.query(func.count(models.Note.id))
         .filter(models.Note.created_at >= seven_days_ago)

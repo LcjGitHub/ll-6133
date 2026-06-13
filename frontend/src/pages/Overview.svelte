@@ -103,21 +103,29 @@
     <Card class="p-6">
       <h3 class="mb-4 text-base font-medium text-gray-700">各类型批次数量对比</h3>
       {#if typeEntries.length > 0}
-        <div class="space-y-3">
-          {#each typeEntries as [type, count]}
-            <div class="flex items-center gap-4">
-              <div class="w-24 flex-shrink-0 text-right text-sm text-gray-600">{type}</div>
-              <div class="flex-1">
-                <div class="h-8 overflow-hidden rounded bg-gray-100">
+        <div class="flex">
+          <div class="mr-2 flex flex-col justify-between text-right text-xs text-gray-500" style="height: 260px; width: 40px;">
+            <span>{maxTypeCount}</span>
+            <span>{Math.round(maxTypeCount * 0.75)}</span>
+            <span>{Math.round(maxTypeCount * 0.5)}</span>
+            <span>{Math.round(maxTypeCount * 0.25)}</span>
+            <span>0</span>
+          </div>
+          <div class="flex-1">
+            <div class="relative flex items-end gap-3 border-l border-b border-gray-200 pl-2" style="height: 260px;">
+              {#each typeEntries as [type, count], i}
+                <div class="group flex flex-1 flex-col items-center">
+                  <span class="mb-1 text-xs font-semibold text-gray-700">{count}</span>
                   <div
-                    class="h-full rounded bg-gradient-to-r from-blue-400 to-blue-600 transition-all duration-500"
-                    style="width: {maxTypeCount > 0 ? (count / maxTypeCount) * 100 : 0}%;"
+                    class="w-full max-w-[60px] rounded-t transition-all duration-500 hover:opacity-80"
+                    style="height: {maxTypeCount > 0 ? (count / maxTypeCount) * 220 : 0}px; background: linear-gradient(to top, hsl({i * 40}, 70%, 55%), hsl({i * 40 + 20}, 70%, 65%));"
+                    title={`${type}: ${count} 批`}
                   ></div>
+                  <span class="mt-2 text-center text-xs text-gray-600 break-all" style="max-width: 80px;">{type}</span>
                 </div>
-              </div>
-              <div class="w-12 text-right text-sm font-medium text-gray-700">{count}</div>
+              {/each}
             </div>
-          {/each}
+          </div>
         </div>
       {:else}
         <p class="text-sm text-gray-500">暂无批次数据</p>

@@ -105,10 +105,7 @@
   }
 
   /** 状态徽章颜色 */
-  function statusColor(status: string): 'green' | 'yellow' | 'blue' | 'dark' {
-    if (status === '已完成') return 'green';
-    if (status === '观察中') return 'yellow';
-    if (status === '发酵中') return 'blue';
+  function statusColor(): 'dark' {
     return 'dark';
   }
 </script>
@@ -132,7 +129,7 @@
     <div class="flex items-center justify-between">
       <h2 class="text-lg font-semibold text-gray-800">{batch.type}</h2>
       <div class="flex gap-2">
-        <Badge color={statusColor(batch.status)} large>{batch.status}</Badge>
+        <Badge color={statusColor()} large>{batch.status}</Badge>
         <Button size="sm" color="light" onclick={() => (editMode = !editMode)}>
           {editMode ? '取消编辑' : '编辑'}
         </Button>
