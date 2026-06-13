@@ -67,3 +67,10 @@ export interface RecipeForm {
   ingredients: string;
   steps: RecipeStepForm[];
 }
+
+/** 统计数据概览 */
+export interface Statistics {
+  status_counts: Record<string, number>;
+  type_counts: Record<string, number>;
+  recent_notes_count: number;
+}

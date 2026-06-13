@@ -70,11 +70,11 @@
   }
 
   /** 状态徽章颜色 */
-  function statusColor(status: string): 'green' | 'yellow' | 'blue' | 'gray' {
+  function statusColor(status: string): 'green' | 'yellow' | 'blue' | 'dark' {
     if (status === '已完成') return 'green';
     if (status === '观察中') return 'yellow';
     if (status === '发酵中') return 'blue';
-    return 'gray';
+    return 'dark';
   }
 </script>
 

@@ -1,7 +1,10 @@
 """家庭发酵实验日志 — FastAPI 入口。"""
 
+from datetime import datetime, timedelta
+
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 import models
@@ -211,3 +214,33 @@ def delete_recipe(recipe_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="配方不存在")
     db.delete(recipe)
     db.commit()
+
+
+@app.get("/api/statistics", response_model=schemas.StatisticsOut)
+def get_statistics(db: Session = Depends(get_db)):
+    """获取数据统计概览。"""
+    status_counts = dict(
+        db.query(models.Batch.status, func.count(models.Batch.id))
+        .group_by(models.Batch.status)
+        .all()
+    )
+
+    type_counts = dict(
+        db.query(models.Batch.type, func.count(models.Batch.id))
+        .group_by(models.Batch.type)
+        .all()
+    )
+
+    seven_days_ago = datetime.utcnow() - timedelta(days=7)
+    recent_notes_count = (
+        db.query(func.count(models.Note.id))
+        .filter(models.Note.created_at >= seven_days_ago)
+        .scalar()
+        or 0
+    )
+
+    return {
+        "status_counts": status_counts,
+        "type_counts": type_counts,
+        "recent_notes_count": recent_notes_count,
+    }

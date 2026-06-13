@@ -122,3 +122,13 @@ class RecipeDetail(RecipeOut):
     """配方详情（含步骤）。"""
 
     steps: list[RecipeStepOut] = []
+
+
+class StatisticsOut(BaseModel):
+    """统计数据响应。"""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    status_counts: dict[str, int]
+    type_counts: dict[str, int]
+    recent_notes_count: int

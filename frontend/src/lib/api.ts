@@ -7,6 +7,7 @@ import type {
   Recipe,
   RecipeDetail,
   RecipeForm,
+  Statistics,
 } from './types';
 
 const api = axios.create({
@@ -92,4 +93,10 @@ export async function updateRecipe(
 /** 删除配方 */
 export async function deleteRecipe(id: number): Promise<void> {
   await api.delete(`/recipes/${id}`);
+}
+
+/** 获取统计数据概览 */
+export async function fetchStatistics(): Promise<Statistics> {
+  const { data } = await api.get<Statistics>('/statistics');
+  return data;
 }

@@ -53,3 +53,11 @@ export function parseRecipeId(path: string): string | null {
 export function isRecipeList(path: string): boolean {
   return path === '/recipes';
 }
+
+/**
+ * 判断是否为概览页。
+ * @param path - 当前路径
+ */
+export function isOverview(path: string): boolean {
+  return path === '/overview';
+}
