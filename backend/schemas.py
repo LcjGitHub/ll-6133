@@ -60,3 +60,65 @@ class BatchDetail(BatchOut):
     """批次详情（含笔记）。"""
 
     notes: list[NoteOut] = []
+
+
+class RecipeStepCreate(BaseModel):
+    """创建配方步骤请求体。"""
+
+    step_order: int = Field(..., ge=1)
+    description: str = Field(..., min_length=1, max_length=2000)
+
+
+class RecipeStepUpdate(BaseModel):
+    """更新配方步骤请求体。"""
+
+    step_order: int | None = Field(None, ge=1)
+    description: str | None = Field(None, min_length=1, max_length=2000)
+
+
+class RecipeStepOut(BaseModel):
+    """配方步骤响应。"""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    recipe_id: int
+    step_order: int
+    description: str
+    created_at: datetime
+
+
+class RecipeCreate(BaseModel):
+    """创建配方请求体。"""
+
+    name: str = Field(..., min_length=1, max_length=200)
+    ferment_type: str = Field(..., min_length=1, max_length=100)
+    ingredients: str = Field(..., min_length=1, max_length=5000)
+    steps: list[RecipeStepCreate] = []
+
+
+class RecipeUpdate(BaseModel):
+    """更新配方请求体。"""
+
+    name: str | None = Field(None, min_length=1, max_length=200)
+    ferment_type: str | None = Field(None, min_length=1, max_length=100)
+    ingredients: str | None = Field(None, min_length=1, max_length=5000)
+    steps: list[RecipeStepCreate] | None = None
+
+
+class RecipeOut(BaseModel):
+    """配方列表项响应。"""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    name: str
+    ferment_type: str
+    ingredients: str
+    created_at: datetime
+
+
+class RecipeDetail(RecipeOut):
+    """配方详情（含步骤）。"""
+
+    steps: list[RecipeStepOut] = []

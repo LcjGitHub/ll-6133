@@ -1,5 +1,13 @@
 import axios from 'axios';
-import type { Batch, BatchDetail, BatchForm, Note } from './types';
+import type {
+  Batch,
+  BatchDetail,
+  BatchForm,
+  Note,
+  Recipe,
+  RecipeDetail,
+  RecipeForm,
+} from './types';
 
 const api = axios.create({
   baseURL: 'http://localhost:5000/api',
@@ -25,7 +33,10 @@ export async function createBatch(payload: BatchForm): Promise<Batch> {
 }
 
 /** 更新批次 */
-export async function updateBatch(id: number, payload: Partial<BatchForm>): Promise<Batch> {
+export async function updateBatch(
+  id: number,
+  payload: Partial<BatchForm>,
+): Promise<Batch> {
   const { data } = await api.put<Batch>(`/batches/${id}`, payload);
   return data;
 }
@@ -36,12 +47,49 @@ export async function deleteBatch(id: number): Promise<void> {
 }
 
 /** 追加观察笔记 */
-export async function createNote(batchId: number, content: string): Promise<Note> {
-  const { data } = await api.post<Note>(`/batches/${batchId}/notes`, { content });
+export async function createNote(
+  batchId: number,
+  content: string,
+): Promise<Note> {
+  const { data } = await api.post<Note>(`/batches/${batchId}/notes`, {
+    content,
+  });
   return data;
 }
 
 /** 删除笔记 */
 export async function deleteNote(noteId: number): Promise<void> {
   await api.delete(`/notes/${noteId}`);
+}
+
+/** 获取全部配方 */
+export async function fetchRecipes(): Promise<Recipe[]> {
+  const { data } = await api.get<Recipe[]>('/recipes');
+  return data;
+}
+
+/** 获取配方详情 */
+export async function fetchRecipe(id: number): Promise<RecipeDetail> {
+  const { data } = await api.get<RecipeDetail>(`/recipes/${id}`);
+  return data;
+}
+
+/** 创建配方 */
+export async function createRecipe(payload: RecipeForm): Promise<RecipeDetail> {
+  const { data } = await api.post<RecipeDetail>('/recipes', payload);
+  return data;
+}
+
+/** 更新配方 */
+export async function updateRecipe(
+  id: number,
+  payload: Partial<RecipeForm>,
+): Promise<RecipeDetail> {
+  const { data } = await api.put<RecipeDetail>(`/recipes/${id}`, payload);
+  return data;
+}
+
+/** 删除配方 */
+export async function deleteRecipe(id: number): Promise<void> {
+  await api.delete(`/recipes/${id}`);
 }

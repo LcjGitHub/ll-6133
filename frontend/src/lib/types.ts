@@ -30,3 +30,40 @@ export interface BatchForm {
   status: string;
   ph: number | null;
 }
+
+/** 配方步骤 */
+export interface RecipeStep {
+  id: number;
+  recipe_id: number;
+  step_order: number;
+  description: string;
+  created_at: string;
+}
+
+/** 配方列表项 */
+export interface Recipe {
+  id: number;
+  name: string;
+  ferment_type: string;
+  ingredients: string;
+  created_at: string;
+}
+
+/** 配方详情（含步骤） */
+export interface RecipeDetail extends Recipe {
+  steps: RecipeStep[];
+}
+
+/** 创建/更新配方步骤 */
+export interface RecipeStepForm {
+  step_order: number;
+  description: string;
+}
+
+/** 创建/更新配方表单 */
+export interface RecipeForm {
+  name: string;
+  ferment_type: string;
+  ingredients: string;
+  steps: RecipeStepForm[];
+}

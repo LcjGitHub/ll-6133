@@ -43,3 +43,39 @@ class Note(Base):
     )
 
     batch: Mapped["Batch"] = relationship("Batch", back_populates="notes")
+
+
+class Recipe(Base):
+    """配方。"""
+
+    __tablename__ = "recipes"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    name: Mapped[str] = mapped_column(String(200), nullable=False)
+    ferment_type: Mapped[str] = mapped_column(String(100), nullable=False)
+    ingredients: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, nullable=False
+    )
+
+    steps: Mapped[list["RecipeStep"]] = relationship(
+        "RecipeStep", back_populates="recipe", cascade="all, delete-orphan", order_by="RecipeStep.step_order"
+    )
+
+
+class RecipeStep(Base):
+    """配方步骤。"""
+
+    __tablename__ = "recipe_steps"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    recipe_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("recipes.id", ondelete="CASCADE"), nullable=False
+    )
+    step_order: Mapped[int] = mapped_column(Integer, nullable=False)
+    description: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, nullable=False
+    )
+
+    recipe: Mapped["Recipe"] = relationship("Recipe", back_populates="steps")

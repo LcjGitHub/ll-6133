@@ -4,7 +4,4 @@ import './app.css';
 
 mount(App, {
   target: document.getElementById('app')!,
-  props: {
-    url: window.location.pathname,
-  },
 });

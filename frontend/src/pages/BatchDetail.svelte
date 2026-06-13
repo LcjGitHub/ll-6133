@@ -1,6 +1,6 @@
 <script lang="ts">
   import { createQuery, createMutation, useQueryClient } from '@tanstack/svelte-query';
-  import { Link } from 'svelte-routing';
+  import RouterLink from '../components/RouterLink.svelte';
   import {
     Button,
     Input,
@@ -112,9 +112,9 @@
 </script>
 
 <div class="space-y-6">
-  <Link to="/" class="inline-flex items-center text-sm text-blue-600 hover:underline">
+  <RouterLink to="/" class="inline-flex items-center text-sm text-blue-600 hover:underline">
     ← 返回列表
-  </Link>
+  </RouterLink>
 
   {#if Number.isNaN(batchId)}
     <Alert color="red">无效的批次 ID</Alert>

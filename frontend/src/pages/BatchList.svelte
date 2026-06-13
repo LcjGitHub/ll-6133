@@ -1,6 +1,6 @@
 <script lang="ts">
   import { createQuery, createMutation, useQueryClient } from '@tanstack/svelte-query';
-  import { Link } from 'svelte-routing';
+  import RouterLink from '../components/RouterLink.svelte';
   import {
     Button,
     Input,
@@ -166,12 +166,12 @@
           {#each $batchesQuery.data ?? [] as batch (batch.id)}
             <TableBodyRow>
               <TableBodyCell>
-                <Link
+                <RouterLink
                   to="/batches/{batch.id}"
                   class="font-medium text-blue-600 hover:underline"
                 >
                   {batch.type}
-                </Link>
+                </RouterLink>
               </TableBodyCell>
               <TableBodyCell>{batch.start_date}</TableBodyCell>
               <TableBodyCell>{batch.temperature}°C</TableBodyCell>
@@ -181,9 +181,9 @@
               <TableBodyCell>{batch.ph ?? '—'}</TableBodyCell>
               <TableBodyCell>
                 <div class="flex gap-2">
-                  <Link to="/batches/{batch.id}">
+                  <RouterLink to="/batches/{batch.id}">
                     <Button size="xs" color="light">详情</Button>
-                  </Link>
+                  </RouterLink>
                   <Button
                     size="xs"
                     color="red"
