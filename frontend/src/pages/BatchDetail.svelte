@@ -21,14 +21,16 @@
 
   let { id }: Props = $props();
 
-  const batchId = $derived(parseInt(id, 10));
+  const isValidId = /^\d+$/.test(id);
+  const numericId = parseInt(id, 10);
+
   const queryClient = useQueryClient();
 
-  const batchQuery = createQuery(() => ({
-    queryKey: ['batch', batchId],
-    queryFn: () => fetchBatch(batchId),
-    enabled: !Number.isNaN(batchId),
-  }));
+  const batchQuery = createQuery({
+    queryKey: ['batch', id],
+    queryFn: () => fetchBatch(numericId),
+    enabled: isValidId,
+  });
 
   let editMode = $state(false);
   let noteContent = $state('');
@@ -56,18 +58,18 @@
   });
 
   const updateMutation_ = createMutation({
-    mutationFn: (payload: Partial<BatchForm>) => updateBatch(batchId, payload),
+    mutationFn: (payload: Partial<BatchForm>) => updateBatch(numericId, payload),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['batch', batchId] });
+      queryClient.invalidateQueries({ queryKey: ['batch', id] });
       queryClient.invalidateQueries({ queryKey: ['batches'] });
       editMode = false;
     },
   });
 
   const noteMutation_ = createMutation({
-    mutationFn: (content: string) => createNote(batchId, content),
+    mutationFn: (content: string) => createNote(numericId, content),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['batch', batchId] });
+      queryClient.invalidateQueries({ queryKey: ['batch', id] });
       noteContent = '';
     },
   });
@@ -75,7 +77,7 @@
   const deleteNoteMutation_ = createMutation({
     mutationFn: deleteNote,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['batch', batchId] });
+      queryClient.invalidateQueries({ queryKey: ['batch', id] });
     },
   });
 
@@ -116,7 +118,7 @@
     ← 返回列表
   </RouterLink>
 
-  {#if Number.isNaN(batchId)}
+  {#if !isValidId}
     <Alert color="red">无效的批次 ID</Alert>
   {:else if $batchQuery.isPending}
     <div class="flex justify-center py-12">

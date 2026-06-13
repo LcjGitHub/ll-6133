@@ -24,13 +24,16 @@
 
   let { id }: Props = $props();
 
-  const recipeId = $derived(parseInt(id, 10));
+  const isValidId = /^\d+$/.test(id);
+  const numericId = parseInt(id, 10);
+
   const queryClient = useQueryClient();
 
-  const recipeQuery = createQuery(() => ({
-    queryKey: ['recipe', recipeId],
-    queryFn: () => fetchRecipe(recipeId),
-  }));
+  const recipeQuery = createQuery({
+    queryKey: ['recipe', id],
+    queryFn: () => fetchRecipe(numericId),
+    enabled: isValidId,
+  });
 
   const recipeData = $derived($recipeQuery.data as RecipeDetail | undefined);
 
@@ -61,9 +64,9 @@
 
   const updateMutation_ = createMutation({
     mutationFn: (payload: Partial<RecipeForm>) =>
-      updateRecipe(recipeId, payload),
+      updateRecipe(numericId, payload),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['recipe', recipeId] });
+      queryClient.invalidateQueries({ queryKey: ['recipe', id] });
       queryClient.invalidateQueries({ queryKey: ['recipes'] });
       editMode = false;
     },
@@ -124,7 +127,7 @@
     ← 返回列表
   </RouterLink>
 
-  {#if Number.isNaN(recipeId)}
+  {#if !isValidId}
     <Alert color="red">无效的配方 ID</Alert>
   {:else if $recipeQuery.isPending}
     <div class="flex justify-center py-12">

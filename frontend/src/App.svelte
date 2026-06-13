@@ -70,11 +70,15 @@
 
     <main class="mx-auto max-w-5xl px-4 py-6">
       {#if parseRecipeId($pathname)}
-        <RecipeDetail id={parseRecipeId($pathname)!} />
+        {#key parseRecipeId($pathname)}
+          <RecipeDetail id={parseRecipeId($pathname)!} />
+        {/key}
       {:else if isRecipeList($pathname)}
         <RecipeList />
       {:else if parseBatchId($pathname)}
-        <BatchDetail id={parseBatchId($pathname)!} />
+        {#key parseBatchId($pathname)}
+          <BatchDetail id={parseBatchId($pathname)!} />
+        {/key}
       {:else}
         <BatchList />
       {/if}
