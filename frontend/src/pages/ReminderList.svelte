@@ -12,11 +12,12 @@
   import {
     fetchReminders,
     createReminder,
+    updateReminder,
     toggleReminderCompleted,
     deleteReminder,
     fetchBatches,
   } from '../lib/api';
-  import type { ReminderForm, Batch } from '../lib/types';
+  import type { Reminder, ReminderForm, Batch } from '../lib/types';
 
   const queryClient = useQueryClient();
 
@@ -37,6 +38,17 @@
     reminder_date: new Date().toISOString().slice(0, 10),
   });
 
+  let editingId = $state<number | null>(null);
+  let editForm = $state<ReminderForm>({
+    batch_id: 0,
+    title: '',
+    reminder_date: '',
+  });
+
+  let togglingId = $state<number | null>(null);
+  let deletingId = $state<number | null>(null);
+  let updatingId = $state<number | null>(null);
+
   const createMutation_ = createMutation({
     mutationFn: createReminder,
     onSuccess: () => {
@@ -50,17 +62,39 @@
     },
   });
 
-  const toggleMutation_ = createMutation({
-    mutationFn: toggleReminderCompleted,
+  const updateMutation_ = createMutation({
+    mutationFn: ({ id, payload }: { id: number; payload: Partial<ReminderForm> }) =>
+      updateReminder(id, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['reminders'] });
+      editingId = null;
+      updatingId = null;
+    },
+  });
+
+  const toggleMutation_ = createMutation({
+    mutationFn: toggleReminderCompleted,
+    onMutate: (id) => {
+      togglingId = id;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['reminders'] });
+    },
+    onSettled: () => {
+      togglingId = null;
     },
   });
 
   const deleteMutation_ = createMutation({
     mutationFn: deleteReminder,
+    onMutate: (id) => {
+      deletingId = id;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['reminders'] });
+    },
+    onSettled: () => {
+      deletingId = null;
     },
   });
 
@@ -68,6 +102,25 @@
     e.preventDefault();
     if (form.batch_id === 0) return;
     $createMutation_.mutate(form);
+  }
+
+  function startEdit(reminder: Reminder) {
+    editingId = reminder.id;
+    editForm = {
+      batch_id: reminder.batch_id,
+      title: reminder.title,
+      reminder_date: reminder.reminder_date,
+    };
+  }
+
+  function cancelEdit() {
+    editingId = null;
+  }
+
+  function saveEdit() {
+    if (editingId === null || editForm.batch_id === 0) return;
+    updatingId = editingId;
+    $updateMutation_.mutate({ id: editingId, payload: editForm });
   }
 
   function getBatchById(batchId: number): Batch | undefined {
@@ -153,42 +206,111 @@
           <div class="space-y-2">
             {#each pendingReminders as reminder (reminder.id)}
               <div
-                class="flex items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3 shadow-sm"
+                class="rounded-lg border border-amber-200 bg-amber-50 p-3 shadow-sm"
               >
-                <input
-                  type="checkbox"
-                  class="h-5 w-5 cursor-pointer rounded border-gray-300 text-amber-600 focus:ring-amber-500"
-                  checked={reminder.completed}
-                  disabled={$toggleMutation_.isPending}
-                  onchange={() => $toggleMutation_.mutate(reminder.id)}
-                />
-                <div class="flex-1 min-w-0">
-                  <div class="flex flex-wrap items-center gap-2">
-                    <span class="font-medium text-gray-900">{reminder.title}</span>
-                    <RouterLink
-                      to="/batches/{reminder.batch_id}"
-                      class="text-sm text-amber-700 hover:underline"
-                    >
-                      批次：{getBatchById(reminder.batch_id)?.type ?? `#${reminder.batch_id}`}
-                    </RouterLink>
+                {#if editingId === reminder.id}
+                  <div class="space-y-3">
+                    <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                      <div>
+                        <Label for={`edit-batch-${reminder.id}`}>关联批次</Label>
+                        <select
+                          id={`edit-batch-${reminder.id}`}
+                          bind:value={editForm.batch_id}
+                          class="block w-full rounded-lg border border-gray-300 bg-white p-2.5 text-sm text-gray-900 focus:border-amber-500 focus:ring-amber-500"
+                          disabled={updatingId === reminder.id}
+                        >
+                          <option value={0} disabled>请选择批次</option>
+                          {#each $batchesQuery.data ?? [] as batch}
+                            <option value={batch.id}>{batch.type} (开始于 {batch.start_date})</option>
+                          {/each}
+                        </select>
+                      </div>
+                      <div>
+                        <Label for={`edit-title-${reminder.id}`}>提醒标题</Label>
+                        <Input
+                          id={`edit-title-${reminder.id}`}
+                          bind:value={editForm.title}
+                          disabled={updatingId === reminder.id}
+                        />
+                      </div>
+                      <div>
+                        <Label for={`edit-date-${reminder.id}`}>提醒日期</Label>
+                        <Input
+                          id={`edit-date-${reminder.id}`}
+                          type="date"
+                          bind:value={editForm.reminder_date}
+                          disabled={updatingId === reminder.id}
+                        />
+                      </div>
+                    </div>
+                    <div class="flex gap-2">
+                      <Button
+                        size="xs"
+                        color="amber"
+                        disabled={updatingId === reminder.id}
+                        onclick={saveEdit}
+                      >
+                        {updatingId === reminder.id ? '保存中…' : '保存'}
+                      </Button>
+                      <Button
+                        size="xs"
+                        color="gray"
+                        outline
+                        disabled={updatingId === reminder.id}
+                        onclick={cancelEdit}
+                      >
+                        取消
+                      </Button>
+                    </div>
                   </div>
-                  <div class="mt-1 text-sm text-gray-600">
-                    提醒日期：{reminder.reminder_date}
+                {:else}
+                  <div class="flex items-center gap-3">
+                    <input
+                      type="checkbox"
+                      class="h-5 w-5 cursor-pointer rounded border-gray-300 text-amber-600 focus:ring-amber-500"
+                      checked={reminder.completed}
+                      disabled={togglingId === reminder.id}
+                      onchange={() => $toggleMutation_.mutate(reminder.id)}
+                    />
+                    <div class="flex-1 min-w-0">
+                      <div class="flex flex-wrap items-center gap-2">
+                        <span class="font-medium text-gray-900">{reminder.title}</span>
+                        <RouterLink
+                          to="/batches/{reminder.batch_id}"
+                          class="text-sm text-amber-700 hover:underline"
+                        >
+                          批次：{getBatchById(reminder.batch_id)?.type ?? `#${reminder.batch_id}`}
+                        </RouterLink>
+                      </div>
+                      <div class="mt-1 text-sm text-gray-600">
+                        提醒日期：{reminder.reminder_date}
+                      </div>
+                    </div>
+                    <div class="flex gap-1">
+                      <Button
+                        size="xs"
+                        color="amber"
+                        outline
+                        onclick={() => startEdit(reminder)}
+                      >
+                        编辑
+                      </Button>
+                      <Button
+                        size="xs"
+                        color="red"
+                        outline
+                        disabled={deletingId === reminder.id}
+                        onclick={() => {
+                          if (confirm(`确定删除提醒「${reminder.title}」？`)) {
+                            $deleteMutation_.mutate(reminder.id);
+                          }
+                        }}
+                      >
+                        删除
+                      </Button>
+                    </div>
                   </div>
-                </div>
-                <Button
-                  size="xs"
-                  color="red"
-                  outline
-                  disabled={$deleteMutation_.isPending}
-                  onclick={() => {
-                    if (confirm(`确定删除提醒「${reminder.title}」？`)) {
-                      $deleteMutation_.mutate(reminder.id);
-                    }
-                  }}
-                >
-                  删除
-                </Button>
+                {/if}
               </div>
             {/each}
           </div>
@@ -201,43 +323,112 @@
           <div class="space-y-2">
             {#each completedReminders as reminder (reminder.id)}
               <div
-                class="flex items-center gap-3 rounded-lg border border-gray-200 bg-gray-50 p-3 shadow-sm opacity-70"
+                class="rounded-lg border border-gray-200 bg-gray-50 p-3 shadow-sm opacity-70"
               >
-                <input
-                  type="checkbox"
-                  class="h-5 w-5 cursor-pointer rounded border-gray-300 text-amber-600 focus:ring-amber-500"
-                  checked={reminder.completed}
-                  disabled={$toggleMutation_.isPending}
-                  onchange={() => $toggleMutation_.mutate(reminder.id)}
-                />
-                <div class="flex-1 min-w-0">
-                  <div class="flex flex-wrap items-center gap-2">
-                    <span class="font-medium text-gray-500 line-through">{reminder.title}</span>
-                    <RouterLink
-                      to="/batches/{reminder.batch_id}"
-                      class="text-sm text-gray-500 hover:underline line-through"
-                    >
-                      批次：{getBatchById(reminder.batch_id)?.type ?? `#${reminder.batch_id}`}
-                    </RouterLink>
-                    <Badge color="green">已完成</Badge>
+                {#if editingId === reminder.id}
+                  <div class="space-y-3">
+                    <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                      <div>
+                        <Label for={`edit-batch-${reminder.id}`}>关联批次</Label>
+                        <select
+                          id={`edit-batch-${reminder.id}`}
+                          bind:value={editForm.batch_id}
+                          class="block w-full rounded-lg border border-gray-300 bg-white p-2.5 text-sm text-gray-900 focus:border-amber-500 focus:ring-amber-500"
+                          disabled={updatingId === reminder.id}
+                        >
+                          <option value={0} disabled>请选择批次</option>
+                          {#each $batchesQuery.data ?? [] as batch}
+                            <option value={batch.id}>{batch.type} (开始于 {batch.start_date})</option>
+                          {/each}
+                        </select>
+                      </div>
+                      <div>
+                        <Label for={`edit-title-${reminder.id}`}>提醒标题</Label>
+                        <Input
+                          id={`edit-title-${reminder.id}`}
+                          bind:value={editForm.title}
+                          disabled={updatingId === reminder.id}
+                        />
+                      </div>
+                      <div>
+                        <Label for={`edit-date-${reminder.id}`}>提醒日期</Label>
+                        <Input
+                          id={`edit-date-${reminder.id}`}
+                          type="date"
+                          bind:value={editForm.reminder_date}
+                          disabled={updatingId === reminder.id}
+                        />
+                      </div>
+                    </div>
+                    <div class="flex gap-2">
+                      <Button
+                        size="xs"
+                        color="amber"
+                        disabled={updatingId === reminder.id}
+                        onclick={saveEdit}
+                      >
+                        {updatingId === reminder.id ? '保存中…' : '保存'}
+                      </Button>
+                      <Button
+                        size="xs"
+                        color="gray"
+                        outline
+                        disabled={updatingId === reminder.id}
+                        onclick={cancelEdit}
+                      >
+                        取消
+                      </Button>
+                    </div>
                   </div>
-                  <div class="mt-1 text-sm text-gray-400">
-                    提醒日期：{reminder.reminder_date}
+                {:else}
+                  <div class="flex items-center gap-3">
+                    <input
+                      type="checkbox"
+                      class="h-5 w-5 cursor-pointer rounded border-gray-300 text-amber-600 focus:ring-amber-500"
+                      checked={reminder.completed}
+                      disabled={togglingId === reminder.id}
+                      onchange={() => $toggleMutation_.mutate(reminder.id)}
+                    />
+                    <div class="flex-1 min-w-0">
+                      <div class="flex flex-wrap items-center gap-2">
+                        <span class="font-medium text-gray-500 line-through">{reminder.title}</span>
+                        <RouterLink
+                          to="/batches/{reminder.batch_id}"
+                          class="text-sm text-gray-500 hover:underline line-through"
+                        >
+                          批次：{getBatchById(reminder.batch_id)?.type ?? `#${reminder.batch_id}`}
+                        </RouterLink>
+                        <Badge color="green">已完成</Badge>
+                      </div>
+                      <div class="mt-1 text-sm text-gray-400">
+                        提醒日期：{reminder.reminder_date}
+                      </div>
+                    </div>
+                    <div class="flex gap-1">
+                      <Button
+                        size="xs"
+                        color="amber"
+                        outline
+                        onclick={() => startEdit(reminder)}
+                      >
+                        编辑
+                      </Button>
+                      <Button
+                        size="xs"
+                        color="red"
+                        outline
+                        disabled={deletingId === reminder.id}
+                        onclick={() => {
+                          if (confirm(`确定删除提醒「${reminder.title}」？`)) {
+                            $deleteMutation_.mutate(reminder.id);
+                          }
+                        }}
+                      >
+                        删除
+                      </Button>
+                    </div>
                   </div>
-                </div>
-                <Button
-                  size="xs"
-                  color="red"
-                  outline
-                  disabled={$deleteMutation_.isPending}
-                  onclick={() => {
-                    if (confirm(`确定删除提醒「${reminder.title}」？`)) {
-                      $deleteMutation_.mutate(reminder.id);
-                    }
-                  }}
-                >
-                  删除
-                </Button>
+                {/if}
               </div>
             {/each}
           </div>
