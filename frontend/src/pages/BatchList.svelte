@@ -1,5 +1,6 @@
 <script lang="ts">
   import { createQuery, createMutation, useQueryClient } from '@tanstack/svelte-query';
+  import { derived, writable } from 'svelte/store';
   import RouterLink from '../components/RouterLink.svelte';
   import {
     Button,
@@ -21,8 +22,8 @@
 
   const queryClient = useQueryClient();
 
-  let statusFilter = $state<string>('');
-  let typeFilter = $state<string>('');
+  const statusFilter = writable<string>('');
+  const typeFilter = writable<string>('');
 
   const statusOptions = ['发酵中', '观察中', '已完成'];
 
@@ -31,18 +32,21 @@
     queryFn: fetchStatistics,
   });
 
-  const typeOptions = $derived(
-    Object.keys($statisticsQuery.data?.type_counts ?? {}).sort(),
+  const typeOptions = derived(statisticsQuery, ($q) =>
+    Object.keys($q.data?.type_counts ?? {}).sort(),
   );
 
-  const batchesQueryOptions = $derived({
-    queryKey: ['batches', { status: statusFilter, type: typeFilter }] as const,
-    queryFn: () =>
-      fetchBatches({
-        status: statusFilter || undefined,
-        type: typeFilter || undefined,
-      }),
-  });
+  const batchesQueryOptions = derived(
+    [statusFilter, typeFilter],
+    ([$status, $type]) => ({
+      queryKey: ['batches', { status: $status, type: $type }] as const,
+      queryFn: () =>
+        fetchBatches({
+          status: $status || undefined,
+          type: $type || undefined,
+        }),
+    }),
+  );
 
   const batchesQuery = createQuery(batchesQueryOptions);
 
@@ -198,6 +202,35 @@
 </script>
 
 <div class="space-y-6">
+  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
+    <div class="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-2">
+      <Label for="filter-status" class="text-sm font-medium text-gray-700 whitespace-nowrap">发酵状态</Label>
+      <select
+        id="filter-status"
+        bind:value={$statusFilter}
+        class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 sm:w-40"
+      >
+        <option value="">全部状态</option>
+        {#each statusOptions as status}
+          <option value={status}>{status}</option>
+        {/each}
+      </select>
+    </div>
+    <div class="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-2">
+      <Label for="filter-type" class="text-sm font-medium text-gray-700 whitespace-nowrap">批次类型</Label>
+      <select
+        id="filter-type"
+        bind:value={$typeFilter}
+        class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 sm:w-40"
+      >
+        <option value="">全部类型</option>
+        {#each $typeOptions as type}
+          <option value={type}>{type}</option>
+        {/each}
+      </select>
+    </div>
+  </div>
+
   <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
     <h2 class="text-lg font-semibold text-gray-800">批次列表</h2>
     <div class="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:flex-wrap">
@@ -246,40 +279,6 @@
         {showForm ? '取消' : '+ 新建批次'}
       </Button>
     </div>
-  </div>
-
-  <div class="flex flex-col gap-4 rounded-lg border border-gray-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:gap-6">
-    <div class="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-2">
-      <Label for="filter-status" class="text-sm font-medium text-gray-700 whitespace-nowrap">发酵状态</Label>
-      <select
-        id="filter-status"
-        bind:value={statusFilter}
-        class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 sm:w-40"
-      >
-        <option value="">全部状态</option>
-        {#each statusOptions as status}
-          <option value={status}>{status}</option>
-        {/each}
-      </select>
-    </div>
-    <div class="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-2">
-      <Label for="filter-type" class="text-sm font-medium text-gray-700 whitespace-nowrap">批次类型</Label>
-      <select
-        id="filter-type"
-        bind:value={typeFilter}
-        class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 sm:w-40"
-      >
-        <option value="">全部类型</option>
-        {#each typeOptions as type}
-          <option value={type}>{type}</option>
-        {/each}
-      </select>
-    </div>
-    {#if statusFilter || typeFilter}
-      <Button size="xs" color="light" outline onclick={() => { statusFilter = ''; typeFilter = ''; }}>
-        清除筛选
-      </Button>
-    {/if}
   </div>
 
   <div
