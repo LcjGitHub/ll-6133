@@ -17,9 +17,27 @@ export interface Note {
   created_at: string;
 }
 
-/** 批次详情（含笔记） */
+/** 温湿度测量记录 */
+export interface Measurement {
+  id: number;
+  batch_id: number;
+  recorded_at: string;
+  temperature: number;
+  ph: number | null;
+  created_at: string;
+}
+
+/** 创建测量记录表单 */
+export interface MeasurementForm {
+  recorded_at: string;
+  temperature: number;
+  ph: number | null;
+}
+
+/** 批次详情（含笔记和测量记录） */
 export interface BatchDetail extends Batch {
   notes: Note[];
+  measurements: Measurement[];
 }
 
 /** 创建/更新批次表单 */

@@ -26,6 +26,9 @@ class Batch(Base):
     notes: Mapped[list["Note"]] = relationship(
         "Note", back_populates="batch", cascade="all, delete-orphan"
     )
+    measurements: Mapped[list["Measurement"]] = relationship(
+        "Measurement", back_populates="batch", cascade="all, delete-orphan"
+    )
 
 
 class Note(Base):
@@ -79,3 +82,22 @@ class RecipeStep(Base):
     )
 
     recipe: Mapped["Recipe"] = relationship("Recipe", back_populates="steps")
+
+
+class Measurement(Base):
+    """温湿度测量记录。"""
+
+    __tablename__ = "measurements"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    batch_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("batches.id", ondelete="CASCADE"), nullable=False
+    )
+    recorded_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    temperature: Mapped[float] = mapped_column(Float, nullable=False)
+    ph: Mapped[float | None] = mapped_column(Float, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, nullable=False
+    )
+
+    batch: Mapped["Batch"] = relationship("Batch", back_populates="measurements")

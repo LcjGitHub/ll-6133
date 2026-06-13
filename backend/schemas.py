@@ -22,6 +22,27 @@ class NoteOut(BaseModel):
     created_at: datetime
 
 
+class MeasurementCreate(BaseModel):
+    """创建测量记录请求体。"""
+
+    recorded_at: datetime
+    temperature: float
+    ph: float | None = None
+
+
+class MeasurementOut(BaseModel):
+    """测量记录响应。"""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    batch_id: int
+    recorded_at: datetime
+    temperature: float
+    ph: float | None
+    created_at: datetime
+
+
 class BatchCreate(BaseModel):
     """创建批次请求体。"""
 
@@ -57,9 +78,10 @@ class BatchOut(BaseModel):
 
 
 class BatchDetail(BatchOut):
-    """批次详情（含笔记）。"""
+    """批次详情（含笔记和测量记录）。"""
 
     notes: list[NoteOut] = []
+    measurements: list[MeasurementOut] = []
 
 
 class RecipeStepCreate(BaseModel):

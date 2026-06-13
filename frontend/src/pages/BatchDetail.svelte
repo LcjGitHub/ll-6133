@@ -12,8 +12,8 @@
     Alert,
     Card,
   } from 'flowbite-svelte';
-  import { fetchBatch, updateBatch, createNote, deleteNote } from '../lib/api';
-  import type { BatchForm } from '../lib/types';
+  import { fetchBatch, updateBatch, createNote, deleteNote, createMeasurement } from '../lib/api';
+  import type { BatchForm, MeasurementForm } from '../lib/types';
 
   interface Props {
     id: string;
@@ -34,6 +34,19 @@
 
   let editMode = $state(false);
   let noteContent = $state('');
+
+  function defaultMeasurementForm(): MeasurementForm {
+    const now = new Date();
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    return {
+      recorded_at: now.toISOString().slice(0, 16),
+      temperature: 25,
+      ph: null,
+    };
+  }
+
+  let measurementForm = $state<MeasurementForm>(defaultMeasurementForm());
+
   let form = $state<BatchForm>({
     type: '',
     start_date: '',
@@ -81,6 +94,14 @@
     },
   });
 
+  const measurementMutation_ = createMutation({
+    mutationFn: (payload: MeasurementForm) => createMeasurement(numericId, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['batch', id] });
+      measurementForm = defaultMeasurementForm();
+    },
+  });
+
   /** 保存批次编辑 */
   function handleUpdate(e: Event) {
     e.preventDefault();
@@ -97,6 +118,16 @@
     const trimmed = noteContent.trim();
     if (!trimmed) return;
     $noteMutation_.mutate(trimmed);
+  }
+
+  /** 追加测量记录 */
+  function handleAddMeasurement(e: Event) {
+    e.preventDefault();
+    const payload: MeasurementForm = {
+      ...measurementForm,
+      ph: measurementForm.ph === null || Number.isNaN(measurementForm.ph) ? null : measurementForm.ph,
+    };
+    $measurementMutation_.mutate(payload);
   }
 
   /** 格式化时间 */
@@ -203,6 +234,88 @@
         </dl>
       </Card>
     {/if}
+
+    <section class="space-y-4">
+      <h3 class="text-base font-semibold text-gray-800">测量记录</h3>
+
+      <form
+        class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm"
+        onsubmit={handleAddMeasurement}
+      >
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <div>
+            <Label for="meas-recorded-at">记录时间</Label>
+            <Input
+              id="meas-recorded-at"
+              type="datetime-local"
+              bind:value={measurementForm.recorded_at}
+              required
+              class="mt-1"
+            />
+          </div>
+          <div>
+            <Label for="meas-temp">温度 (°C)</Label>
+            <Input
+              id="meas-temp"
+              type="number"
+              step="0.1"
+              bind:value={measurementForm.temperature}
+              required
+              class="mt-1"
+            />
+          </div>
+          <div>
+            <Label for="meas-ph">pH（可选）</Label>
+            <Input
+              id="meas-ph"
+              type="number"
+              step="0.1"
+              min="0"
+              max="14"
+              value={measurementForm.ph ?? ''}
+              class="mt-1"
+              oninput={(e) => {
+                const v = (e.target as HTMLInputElement).value;
+                measurementForm.ph = v === '' ? null : parseFloat(v);
+              }}
+            />
+          </div>
+        </div>
+        <Button
+          type="submit"
+          color="blue"
+          class="mt-3"
+          disabled={$measurementMutation_.isPending}
+        >
+          {$measurementMutation_.isPending ? '提交中…' : '追加测量记录'}
+        </Button>
+      </form>
+
+      {#if batch.measurements.length === 0}
+        <Alert color="yellow">暂无测量记录，在上方表单追加第一条。</Alert>
+      {:else}
+        <div class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">记录时间</th>
+                <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">温度 (°C)</th>
+                <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">pH</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200 bg-white">
+              {#each batch.measurements as m (m.id)}
+                <tr class="hover:bg-gray-50">
+                  <td class="whitespace-nowrap px-4 py-3 text-sm text-gray-700">{formatTime(m.recorded_at)}</td>
+                  <td class="whitespace-nowrap px-4 py-3 text-sm text-gray-700">{m.temperature.toFixed(1)}</td>
+                  <td class="whitespace-nowrap px-4 py-3 text-sm text-gray-700">{m.ph?.toFixed(1) ?? '—'}</td>
+                </tr>
+              {/each}
+            </tbody>
+          </table>
+        </div>
+      {/if}
+    </section>
 
     <section class="space-y-4">
       <h3 class="text-base font-semibold text-gray-800">观察笔记</h3>

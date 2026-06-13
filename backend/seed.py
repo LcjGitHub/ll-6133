@@ -1,10 +1,10 @@
 """初始化种子数据。"""
 
-from datetime import date
+from datetime import date, datetime
 
 from sqlalchemy.orm import Session
 
-from models import Batch, Note, Recipe, RecipeStep
+from models import Batch, Note, Recipe, RecipeStep, Measurement
 
 
 def seed_data(db: Session) -> None:
@@ -57,6 +57,23 @@ def seed_data(db: Session) -> None:
         ]
 
         db.add_all(notes)
+
+        measurements = [
+            Measurement(
+                batch_id=batches[0].id,
+                recorded_at=datetime(2026, 5, 22, 10, 30),
+                temperature=25.5,
+                ph=3.8,
+            ),
+            Measurement(
+                batch_id=batches[0].id,
+                recorded_at=datetime(2026, 5, 25, 9, 15),
+                temperature=26.2,
+                ph=3.4,
+            ),
+        ]
+
+        db.add_all(measurements)
 
     if db.query(Recipe).count() == 0:
         recipes = [

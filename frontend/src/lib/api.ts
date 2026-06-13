@@ -4,6 +4,8 @@ import type {
   BatchDetail,
   BatchForm,
   Note,
+  Measurement,
+  MeasurementForm,
   Recipe,
   RecipeDetail,
   RecipeForm,
@@ -61,6 +63,24 @@ export async function createNote(
 /** 删除笔记 */
 export async function deleteNote(noteId: number): Promise<void> {
   await api.delete(`/notes/${noteId}`);
+}
+
+/** 按批次查询全部测量记录 */
+export async function fetchMeasurements(batchId: number): Promise<Measurement[]> {
+  const { data } = await api.get<Measurement[]>(`/batches/${batchId}/measurements`);
+  return data;
+}
+
+/** 新增单条测量记录 */
+export async function createMeasurement(
+  batchId: number,
+  payload: MeasurementForm,
+): Promise<Measurement> {
+  const { data } = await api.post<Measurement>(
+    `/batches/${batchId}/measurements`,
+    payload,
+  );
+  return data;
 }
 
 /** 获取全部配方 */
