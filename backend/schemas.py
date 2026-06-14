@@ -202,3 +202,37 @@ class ImportResult(BaseModel):
     skipped_notes: int
     total_batches_in_file: int
     total_notes_in_file: int
+
+
+class StrainCreate(BaseModel):
+    """创建菌种请求体。"""
+
+    name: str = Field(..., min_length=1, max_length=200)
+    ferment_type: str = Field(..., min_length=1, max_length=100)
+    activation_date: date
+    storage_location: str = Field(..., min_length=1, max_length=200)
+    notes: str | None = Field(None, max_length=5000)
+
+
+class StrainUpdate(BaseModel):
+    """更新菌种请求体。"""
+
+    name: str | None = Field(None, min_length=1, max_length=200)
+    ferment_type: str | None = Field(None, min_length=1, max_length=100)
+    activation_date: date | None = None
+    storage_location: str | None = Field(None, min_length=1, max_length=200)
+    notes: str | None = Field(None, max_length=5000)
+
+
+class StrainOut(BaseModel):
+    """菌种响应。"""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    name: str
+    ferment_type: str
+    activation_date: date
+    storage_location: str
+    notes: str | None
+    created_at: datetime

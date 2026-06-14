@@ -132,3 +132,19 @@ class Reminder(Base):
     )
 
     batch: Mapped["Batch"] = relationship("Batch", back_populates="reminders")
+
+
+class Strain(Base):
+    """发酵菌种。"""
+
+    __tablename__ = "strains"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    name: Mapped[str] = mapped_column(String(200), nullable=False)
+    ferment_type: Mapped[str] = mapped_column(String(100), nullable=False)
+    activation_date: Mapped[date] = mapped_column(Date, nullable=False)
+    storage_location: Mapped[str] = mapped_column(String(200), nullable=False)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, nullable=False
+    )

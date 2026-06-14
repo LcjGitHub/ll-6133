@@ -120,3 +120,23 @@ export interface ImportResult {
   total_batches_in_file: number;
   total_notes_in_file: number;
 }
+
+/** 发酵菌种 */
+export interface Strain {
+  id: number;
+  name: string;
+  ferment_type: string;
+  activation_date: string;
+  storage_location: string;
+  notes: string | null;
+  created_at: string;
+}
+
+/** 创建/更新菌种表单 */
+export interface StrainForm {
+  name: string;
+  ferment_type: string;
+  activation_date: string;
+  storage_location: string;
+  notes: string | null;
+}

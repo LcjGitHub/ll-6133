@@ -13,6 +13,8 @@ import type {
   ReminderForm,
   Statistics,
   ImportResult,
+  Strain,
+  StrainForm,
 } from './types';
 
 const api = axios.create({
@@ -243,4 +245,30 @@ export async function importBatches(file: File): Promise<ImportResult> {
     const message = await extractErrorDetail(error);
     throw new Error(message);
   }
+}
+
+/** 获取全部菌种 */
+export async function fetchStrains(): Promise<Strain[]> {
+  const { data } = await api.get<Strain[]>('/strains');
+  return data;
+}
+
+/** 创建菌种 */
+export async function createStrain(payload: StrainForm): Promise<Strain> {
+  const { data } = await api.post<Strain>('/strains', payload);
+  return data;
+}
+
+/** 更新菌种 */
+export async function updateStrain(
+  id: number,
+  payload: Partial<StrainForm>,
+): Promise<Strain> {
+  const { data } = await api.put<Strain>(`/strains/${id}`, payload);
+  return data;
+}
+
+/** 删除菌种 */
+export async function deleteStrain(id: number): Promise<void> {
+  await api.delete(`/strains/${id}`);
 }

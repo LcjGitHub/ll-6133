@@ -7,6 +7,7 @@
   import RecipeDetail from './pages/RecipeDetail.svelte';
   import Overview from './pages/Overview.svelte';
   import ReminderList from './pages/ReminderList.svelte';
+  import StrainList from './pages/StrainList.svelte';
   import {
     initRouter,
     parseBatchId,
@@ -14,6 +15,7 @@
     isRecipeList,
     isOverview,
     isReminderList,
+    isStrainList,
     pathname,
     navigate,
   } from './lib/router';
@@ -43,6 +45,10 @@
 
   function isRemindersActive(path: string): boolean {
     return isReminderList(path);
+  }
+
+  function isStrainsActive(path: string): boolean {
+    return isStrainList(path);
   }
 </script>
 
@@ -89,6 +95,17 @@
             <button
               class={
                 'rounded-lg px-3 py-2 text-sm font-medium transition-colors ' +
+                (isStrainsActive($pathname)
+                  ? 'bg-cyan-100 text-cyan-700'
+                  : 'text-gray-600 hover:bg-gray-100')
+              }
+              onclick={() => navigate('/strains')}
+            >
+              菌种管理
+            </button>
+            <button
+              class={
+                'rounded-lg px-3 py-2 text-sm font-medium transition-colors ' +
                 (isRemindersActive($pathname)
                   ? 'bg-amber-100 text-amber-700'
                   : 'text-gray-600 hover:bg-gray-100')
@@ -105,6 +122,8 @@
     <main class="mx-auto max-w-5xl px-4 py-6">
       {#if isOverview($pathname)}
         <Overview />
+      {:else if isStrainList($pathname)}
+        <StrainList />
       {:else if isReminderList($pathname)}
         <ReminderList />
       {:else if parseRecipeId($pathname)}

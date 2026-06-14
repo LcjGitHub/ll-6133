@@ -69,3 +69,11 @@ export function isOverview(path: string): boolean {
 export function isReminderList(path: string): boolean {
   return path === '/reminders';
 }
+
+/**
+ * 判断是否为菌种列表页。
+ * @param path - 当前路径
+ */
+export function isStrainList(path: string): boolean {
+  return path === '/strains';
+}

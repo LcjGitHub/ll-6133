@@ -13,6 +13,7 @@ from routers.measurements import router as measurements_router
 from routers.recipes import router as recipes_router
 from routers.statistics import router as statistics_router
 from routers.reminders import router as reminders_router
+from routers.strains import router as strains_router
 from seed import seed_data
 
 Base.metadata.create_all(bind=engine)
@@ -58,3 +59,4 @@ app.include_router(measurements_router)
 app.include_router(recipes_router)
 app.include_router(statistics_router)
 app.include_router(reminders_router)
+app.include_router(strains_router)

@@ -4,7 +4,7 @@ from datetime import date, datetime
 
 from sqlalchemy.orm import Session
 
-from models import Batch, Note, Recipe, RecipeStep, Measurement, Reminder
+from models import Batch, Note, Recipe, RecipeStep, Measurement, Reminder, Strain
 
 
 def seed_data(db: Session) -> None:
@@ -182,5 +182,38 @@ def seed_data(db: Session) -> None:
                 ),
             ]
             db.add_all(reminders)
+
+    if db.query(Strain).count() == 0:
+        strains = [
+            Strain(
+                name="康普茶 SCOBY 初代",
+                ferment_type="康普茶",
+                activation_date=date(2026, 3, 15),
+                storage_location="厨房玻璃柜 A 层",
+                notes="从朋友处获得的初代 SCOBY，菌膜厚实，活力旺盛。每 3-4 周需要重新激活一次。",
+            ),
+            Strain(
+                name="天然酵种（小麦）",
+                ferment_type="酸面包",
+                activation_date=date(2026, 4, 1),
+                storage_location="冰箱冷藏室 4°C",
+                notes="100% 水粉比喂养，每周周末取出回温并喂两次。酸味温和，适合做乡村面包。",
+            ),
+            Strain(
+                name="泡菜老盐水",
+                ferment_type="泡菜",
+                activation_date=date(2026, 2, 20),
+                storage_location="阳台阴凉处",
+                notes="传承自妈妈的老坛水，乳酸菌丰富，做新泡菜时加入可缩短发酵时间。",
+            ),
+            Strain(
+                name="开菲尔粒",
+                ferment_type="其他",
+                activation_date=date(2026, 5, 10),
+                storage_location="厨房室温避光处",
+                notes="牛奶开菲尔，每天更换一次鲜牛奶。颗粒状，发酵后酸奶口感清爽。",
+            ),
+        ]
+        db.add_all(strains)
 
     db.commit()
