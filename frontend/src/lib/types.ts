@@ -175,3 +175,21 @@ export interface SearchResult {
   note_count: number;
   total_count: number;
 }
+
+/** 备份文件摘要信息 */
+export interface BackupSummary {
+  batches: number;
+  notes: number;
+  measurements: number;
+  recipes: number;
+  recipe_steps: number;
+  reminders: number;
+  strains: number;
+}
+
+/** 数据恢复结果 */
+export interface BackupRestoreResult {
+  success: boolean;
+  message: string;
+  summary: BackupSummary;
+}

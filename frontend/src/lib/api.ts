@@ -16,6 +16,8 @@ import type {
   Strain,
   StrainForm,
   SearchResult,
+  BackupSummary,
+  BackupRestoreResult,
 } from './types';
 
 const api = axios.create({
@@ -280,4 +282,72 @@ export async function globalSearch(keyword: string): Promise<SearchResult> {
     params: { q: keyword },
   });
   return data;
+}
+
+/** 下载全部数据备份文件 */
+export async function downloadBackup(): Promise<void> {
+  try {
+    const response = await api.get('/backup', {
+      responseType: 'blob',
+    });
+    const contentDisposition = response.headers['content-disposition'] ?? '';
+    const match = contentDisposition.match(/filename="?([^";]+)"?/);
+    const filename = match ? match[1] : 'ferment_backup.json';
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', filename);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  } catch (error: any) {
+    const message = await extractErrorDetail(error);
+    throw new Error(message);
+  }
+}
+
+/** 预览备份文件内容摘要（不写入数据库） */
+export async function previewBackup(file: File): Promise<BackupSummary> {
+  const formData = new FormData();
+  formData.append('file', file);
+  try {
+    const { data } = await api.post<BackupSummary>(
+      '/backup/preview',
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      },
+    );
+    return data;
+  } catch (error: any) {
+    const message = await extractErrorDetail(error);
+    throw new Error(message);
+  }
+}
+
+/** 从备份文件恢复数据 */
+export async function restoreBackup(
+  file: File,
+  confirmOverwrite: boolean = false,
+): Promise<BackupRestoreResult> {
+  const formData = new FormData();
+  formData.append('file', file);
+  try {
+    const { data } = await api.post<BackupRestoreResult>(
+      `/backup/restore?confirm_overwrite=${confirmOverwrite}`,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      },
+    );
+    return data;
+  } catch (error: any) {
+    const message = await extractErrorDetail(error);
+    throw new Error(message);
+  }
 }

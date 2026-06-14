@@ -281,3 +281,27 @@ class SearchResult(BaseModel):
     recipe_count: int = 0
     note_count: int = 0
     total_count: int = 0
+
+
+class BackupSummary(BaseModel):
+    """备份文件摘要信息。"""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    batches: int
+    notes: int
+    measurements: int
+    recipes: int
+    recipe_steps: int
+    reminders: int
+    strains: int
+
+
+class BackupRestoreResult(BaseModel):
+    """数据恢复结果。"""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    success: bool
+    message: str
+    summary: BackupSummary
