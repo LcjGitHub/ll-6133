@@ -4,6 +4,7 @@
     createMutation,
     useQueryClient,
   } from '@tanstack/svelte-query';
+  import { derived, writable } from 'svelte/store';
   import RouterLink from '../components/RouterLink.svelte';
   import {
     Button,
@@ -25,10 +26,35 @@
 
   const queryClient = useQueryClient();
 
-  const recipesQuery = createQuery({
-    queryKey: ['recipes'],
-    queryFn: fetchRecipes,
-  });
+  const fermentTypeFilter = writable<string>('');
+  const searchKeyword = writable<string>('');
+
+  let searchInput = $state('');
+  let searchTimer: ReturnType<typeof setTimeout> | null = null;
+
+  function onSearchInput(value: string) {
+    searchInput = value;
+    if (searchTimer) clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => {
+      searchKeyword.set(value.trim());
+    }, 500);
+  }
+
+  const fermentTypeOptions = ['康普茶', '泡菜', '酸面包', '其他'];
+
+  const recipesQueryOptions = derived(
+    [fermentTypeFilter, searchKeyword],
+    ([$fermentType, $search]) => ({
+      queryKey: ['recipes', { ferment_type: $fermentType, search: $search }] as const,
+      queryFn: () =>
+        fetchRecipes({
+          ferment_type: $fermentType || undefined,
+          search: $search || undefined,
+        }),
+    }),
+  );
+
+  const recipesQuery = createQuery(recipesQueryOptions);
 
   let showForm = $state(false);
   let form = $state<RecipeForm>({
@@ -38,12 +64,10 @@
     steps: [],
   });
 
-  const fermentTypeOptions = ['康普茶', '泡菜', '酸面包', '其他'];
-
   const createMutation_ = createMutation({
     mutationFn: createRecipe,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['recipes'] });
+      queryClient.invalidateQueries({ queryKey: ['recipes'], exact: false });
       showForm = false;
       form = {
         name: '',
@@ -57,7 +81,7 @@
   const deleteMutation_ = createMutation({
     mutationFn: deleteRecipe,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['recipes'] });
+      queryClient.invalidateQueries({ queryKey: ['recipes'], exact: false });
     },
   });
 
@@ -85,6 +109,32 @@
 </script>
 
 <div class="space-y-6">
+  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6 sm:flex-wrap">
+    <div class="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-2">
+      <Label for="search-keyword" class="text-sm font-medium text-gray-700 whitespace-nowrap">关键字搜索</Label>
+      <Input
+        id="search-keyword"
+        value={searchInput}
+        oninput={(e) => onSearchInput((e.target as HTMLInputElement).value)}
+        placeholder="按配方名称模糊搜索"
+        class="sm:w-56"
+      />
+    </div>
+    <div class="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-2">
+      <Label for="filter-ferment-type" class="text-sm font-medium text-gray-700 whitespace-nowrap">发酵类型</Label>
+      <select
+        id="filter-ferment-type"
+        bind:value={$fermentTypeFilter}
+        class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 sm:w-40"
+      >
+        <option value="">全部类型</option>
+        {#each fermentTypeOptions as type}
+          <option value={type}>{type}</option>
+        {/each}
+      </select>
+    </div>
+  </div>
+
   <div class="flex items-center justify-between">
     <h2 class="text-lg font-semibold text-gray-800">配方列表</h2>
     <Button color="green" onclick={() => (showForm = !showForm)}>

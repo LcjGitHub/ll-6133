@@ -128,9 +128,12 @@ export async function deleteMeasurement(
   await api.delete(`/batches/${batchId}/measurements/${measurementId}`);
 }
 
-/** 获取全部配方 */
-export async function fetchRecipes(): Promise<Recipe[]> {
-  const { data } = await api.get<Recipe[]>('/recipes');
+/** 获取全部配方，可按名称关键字模糊搜索，或按发酵类型精确筛选 */
+export async function fetchRecipes(params?: {
+  search?: string;
+  ferment_type?: string;
+}): Promise<Recipe[]> {
+  const { data } = await api.get<Recipe[]>('/recipes', { params });
   return data;
 }
 

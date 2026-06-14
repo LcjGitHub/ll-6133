@@ -1,6 +1,6 @@
 """配方路由模块。"""
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 import models
@@ -11,9 +11,18 @@ router = APIRouter(prefix="/api/recipes", tags=["配方"])
 
 
 @router.get("", response_model=list[schemas.RecipeOut])
-def list_recipes(db: Session = Depends(get_db)):
-    """获取全部配方。"""
-    return db.query(models.Recipe).order_by(models.Recipe.created_at.desc()).all()
+def list_recipes(
+    search: str | None = Query(None, description="按配方名称关键字模糊搜索"),
+    ferment_type: str | None = Query(None, description="按发酵类型精确筛选"),
+    db: Session = Depends(get_db),
+):
+    """获取全部配方，可按名称关键字模糊搜索，或按发酵类型精确筛选。"""
+    query = db.query(models.Recipe)
+    if search:
+        query = query.filter(models.Recipe.name.contains(search))
+    if ferment_type:
+        query = query.filter(models.Recipe.ferment_type == ferment_type)
+    return query.order_by(models.Recipe.created_at.desc()).all()
 
 
 @router.post("", response_model=schemas.RecipeDetail, status_code=201)
