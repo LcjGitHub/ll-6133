@@ -15,6 +15,7 @@ import type {
   ImportResult,
   Strain,
   StrainForm,
+  SearchResult,
 } from './types';
 
 const api = axios.create({
@@ -271,4 +272,12 @@ export async function updateStrain(
 /** 删除菌种 */
 export async function deleteStrain(id: number): Promise<void> {
   await api.delete(`/strains/${id}`);
+}
+
+/** 全局搜索 */
+export async function globalSearch(keyword: string): Promise<SearchResult> {
+  const { data } = await api.get<SearchResult>('/search', {
+    params: { q: keyword },
+  });
+  return data;
 }

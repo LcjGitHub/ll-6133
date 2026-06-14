@@ -236,3 +236,48 @@ class StrainOut(BaseModel):
     storage_location: str
     notes: str | None
     created_at: datetime
+
+
+class SearchResultItem(BaseModel):
+    """搜索结果基类。"""
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class SearchBatchItem(SearchResultItem):
+    """批次搜索结果项。"""
+
+    id: int
+    type: str
+    start_date: date
+    status: str
+    fermentation_days: int
+
+
+class SearchRecipeItem(SearchResultItem):
+    """配方搜索结果项。"""
+
+    id: int
+    name: str
+    ferment_type: str
+
+
+class SearchNoteItem(SearchResultItem):
+    """笔记搜索结果项。"""
+
+    id: int
+    batch_id: int
+    content: str
+    created_at: datetime
+
+
+class SearchResult(BaseModel):
+    """全局搜索结果。"""
+
+    batches: list[SearchBatchItem] = []
+    recipes: list[SearchRecipeItem] = []
+    notes: list[SearchNoteItem] = []
+    batch_count: int = 0
+    recipe_count: int = 0
+    note_count: int = 0
+    total_count: int = 0

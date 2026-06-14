@@ -77,3 +77,11 @@ export function isReminderList(path: string): boolean {
 export function isStrainList(path: string): boolean {
   return path === '/strains';
 }
+
+/**
+ * 判断是否为搜索页。
+ * @param path - 当前路径
+ */
+export function isSearch(path: string): boolean {
+  return path === '/search';
+}

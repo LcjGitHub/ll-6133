@@ -140,3 +140,38 @@ export interface StrainForm {
   storage_location: string;
   notes: string | null;
 }
+
+/** 批次搜索结果项 */
+export interface SearchBatchItem {
+  id: number;
+  type: string;
+  start_date: string;
+  status: string;
+  fermentation_days: number;
+}
+
+/** 配方搜索结果项 */
+export interface SearchRecipeItem {
+  id: number;
+  name: string;
+  ferment_type: string;
+}
+
+/** 笔记搜索结果项 */
+export interface SearchNoteItem {
+  id: number;
+  batch_id: number;
+  content: string;
+  created_at: string;
+}
+
+/** 全局搜索结果 */
+export interface SearchResult {
+  batches: SearchBatchItem[];
+  recipes: SearchRecipeItem[];
+  notes: SearchNoteItem[];
+  batch_count: number;
+  recipe_count: number;
+  note_count: number;
+  total_count: number;
+}
