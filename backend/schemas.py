@@ -36,6 +36,14 @@ class MeasurementCreate(BaseModel):
     ph: float | None = None
 
 
+class MeasurementUpdate(BaseModel):
+    """更新测量记录请求体。"""
+
+    recorded_at: datetime | None = None
+    temperature: float | None = None
+    ph: float | None = None
+
+
 class MeasurementOut(BaseModel):
     """测量记录响应。"""
 

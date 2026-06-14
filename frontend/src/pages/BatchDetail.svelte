@@ -11,7 +11,7 @@
     Alert,
     Card,
   } from 'flowbite-svelte';
-  import { fetchBatch, updateBatch, createNote, deleteNote, updateNote, createMeasurement, extractErrorDetail } from '../lib/api';
+  import { fetchBatch, updateBatch, createNote, deleteNote, updateNote, createMeasurement, updateMeasurement, deleteMeasurement, extractErrorDetail } from '../lib/api';
   import type { BatchForm, MeasurementForm } from '../lib/types';
 
   interface Props {
@@ -39,6 +39,10 @@
   let editingNoteContent = $state('');
   let updateNoteError = $state<string>('');
   let statusError = $state<string>('');
+
+  let editingMeasurementId = $state<number | null>(null);
+  let editingMeasurementForm = $state<MeasurementForm>(defaultMeasurementForm());
+  let updateMeasurementError = $state<string>('');
 
   function defaultMeasurementForm(): MeasurementForm {
     const now = new Date();
@@ -169,6 +173,56 @@
       measurementForm = defaultMeasurementForm();
     },
   });
+
+  const updateMeasurementMutation_ = createMutation({
+    mutationFn: ({ measurementId, payload }: { measurementId: number; payload: Partial<MeasurementForm> }) =>
+      updateMeasurement(numericId, measurementId, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['batch', id] });
+      editingMeasurementId = null;
+      editingMeasurementForm = defaultMeasurementForm();
+      updateMeasurementError = '';
+    },
+    onError: async (error) => {
+      updateMeasurementError = await extractErrorDetail(error);
+    },
+  });
+
+  const deleteMeasurementMutation_ = createMutation({
+    mutationFn: (measurementId: number) => deleteMeasurement(numericId, measurementId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['batch', id] });
+    },
+  });
+
+  function startEditMeasurement(measurement: { id: number; recorded_at: string; temperature: number; ph: number | null }) {
+    editingMeasurementId = measurement.id;
+    const dt = new Date(measurement.recorded_at);
+    dt.setMinutes(dt.getMinutes() - dt.getTimezoneOffset());
+    editingMeasurementForm = {
+      recorded_at: dt.toISOString().slice(0, 16),
+      temperature: measurement.temperature,
+      ph: measurement.ph,
+    };
+    updateMeasurementError = '';
+  }
+
+  function cancelEditMeasurement() {
+    editingMeasurementId = null;
+    editingMeasurementForm = defaultMeasurementForm();
+    updateMeasurementError = '';
+  }
+
+  function handleSaveMeasurement(e: Event) {
+    e.preventDefault();
+    if (editingMeasurementId === null) return;
+    const payload: Partial<MeasurementForm> = {
+      recorded_at: editingMeasurementForm.recorded_at,
+      temperature: editingMeasurementForm.temperature,
+      ph: editingMeasurementForm.ph === null || Number.isNaN(editingMeasurementForm.ph) ? null : editingMeasurementForm.ph,
+    };
+    $updateMeasurementMutation_.mutate({ measurementId: editingMeasurementId, payload });
+  }
 
   /** 保存批次编辑 */
   function handleUpdate(e: Event) {
@@ -388,15 +442,111 @@
                 <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">记录时间</th>
                 <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">温度 (°C)</th>
                 <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">pH</th>
+                <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">操作</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-gray-200 bg-white">
               {#each batch.measurements as m (m.id)}
-                <tr class="hover:bg-gray-50">
-                  <td class="whitespace-nowrap px-4 py-3 text-sm text-gray-700">{formatTime(m.recorded_at)}</td>
-                  <td class="whitespace-nowrap px-4 py-3 text-sm text-gray-700">{m.temperature.toFixed(1)}</td>
-                  <td class="whitespace-nowrap px-4 py-3 text-sm text-gray-700">{m.ph?.toFixed(1) ?? '—'}</td>
-                </tr>
+                {#if editingMeasurementId === m.id}
+                  <tr>
+                    <td colspan="4" class="px-4 py-3">
+                      <form onsubmit={handleSaveMeasurement} class="space-y-4">
+                        {#if updateMeasurementError}
+                          <Alert color="red">{updateMeasurementError}</Alert>
+                        {/if}
+                        <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                          <div>
+                            <Label for="edit-meas-recorded-at">记录时间</Label>
+                            <Input
+                              id="edit-meas-recorded-at"
+                              type="datetime-local"
+                              bind:value={editingMeasurementForm.recorded_at}
+                              required
+                              class="mt-1"
+                            />
+                          </div>
+                          <div>
+                            <Label for="edit-meas-temp">温度 (°C)</Label>
+                            <Input
+                              id="edit-meas-temp"
+                              type="number"
+                              step="0.1"
+                              bind:value={editingMeasurementForm.temperature}
+                              required
+                              class="mt-1"
+                            />
+                          </div>
+                          <div>
+                            <Label for="edit-meas-ph">pH（可选）</Label>
+                            <Input
+                              id="edit-meas-ph"
+                              type="number"
+                              step="0.1"
+                              min="0"
+                              max="14"
+                              value={editingMeasurementForm.ph ?? ''}
+                              class="mt-1"
+                              oninput={(e) => {
+                                const v = (e.target as HTMLInputElement).value;
+                                editingMeasurementForm.ph = v === '' ? null : parseFloat(v);
+                              }}
+                            />
+                          </div>
+                        </div>
+                        <div class="flex gap-2">
+                          <Button
+                            type="submit"
+                            color="blue"
+                            size="sm"
+                            disabled={$updateMeasurementMutation_.isPending}
+                          >
+                            {$updateMeasurementMutation_.isPending ? '保存中…' : '保存'}
+                          </Button>
+                          <Button
+                            type="button"
+                            color="light"
+                            size="sm"
+                            onclick={cancelEditMeasurement}
+                            disabled={$updateMeasurementMutation_.isPending}
+                          >
+                            取消
+                          </Button>
+                        </div>
+                      </form>
+                    </td>
+                  </tr>
+                {:else}
+                  <tr class="hover:bg-gray-50">
+                    <td class="whitespace-nowrap px-4 py-3 text-sm text-gray-700">{formatTime(m.recorded_at)}</td>
+                    <td class="whitespace-nowrap px-4 py-3 text-sm text-gray-700">{m.temperature.toFixed(1)}</td>
+                    <td class="whitespace-nowrap px-4 py-3 text-sm text-gray-700">{m.ph?.toFixed(1) ?? '—'}</td>
+                    <td class="whitespace-nowrap px-4 py-3 text-sm">
+                      <div class="flex gap-2">
+                        <Button
+                          size="xs"
+                          color="light"
+                          onclick={() => startEditMeasurement(m)}
+                          disabled={$deleteMeasurementMutation_.isPending || editingMeasurementId !== null}
+                        >
+                          编辑
+                        </Button>
+                        <Button
+                          size="xs"
+                          color="red"
+                          outline
+                          disabled={$deleteMeasurementMutation_.isPending || editingMeasurementId !== null}
+                          onclick={() => {
+                            if (confirm('确定删除这条测量记录？')) {
+                              $deleteMeasurementMutation_.mutate(m.id);
+                            }
+                          }}
+                        >
+                          删除
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                {/if}
               {/each}
             </tbody>
           </table>

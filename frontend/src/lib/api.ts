@@ -107,6 +107,27 @@ export async function createMeasurement(
   return data;
 }
 
+/** 更新指定批次下的测量记录 */
+export async function updateMeasurement(
+  batchId: number,
+  measurementId: number,
+  payload: Partial<MeasurementForm>,
+): Promise<Measurement> {
+  const { data } = await api.put<Measurement>(
+    `/batches/${batchId}/measurements/${measurementId}`,
+    payload,
+  );
+  return data;
+}
+
+/** 删除指定批次下的测量记录 */
+export async function deleteMeasurement(
+  batchId: number,
+  measurementId: number,
+): Promise<void> {
+  await api.delete(`/batches/${batchId}/measurements/${measurementId}`);
+}
+
 /** 获取全部配方 */
 export async function fetchRecipes(): Promise<Recipe[]> {
   const { data } = await api.get<Recipe[]>('/recipes');
