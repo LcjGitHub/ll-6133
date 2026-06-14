@@ -57,14 +57,17 @@ def health():
 def list_batches(
     status: str | None = Query(None, description="按发酵状态筛选"),
     type: str | None = Query(None, description="按批次类型筛选"),
+    search: str | None = Query(None, description="按批次类型关键字模糊搜索"),
     db: Session = Depends(get_db),
 ):
-    """获取全部批次，可按状态和类型筛选。"""
+    """获取全部批次，可按状态、类型筛选，或按类型关键字模糊搜索。"""
     query = db.query(models.Batch)
     if status:
         query = query.filter(models.Batch.status == status)
     if type:
         query = query.filter(models.Batch.type == type)
+    if search:
+        query = query.filter(models.Batch.type.contains(search))
     return query.order_by(models.Batch.start_date.desc()).all()
 
 

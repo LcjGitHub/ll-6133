@@ -1,6 +1,5 @@
 <script lang="ts">
   import { createQuery, createMutation, useQueryClient } from '@tanstack/svelte-query';
-  import { derived, writable } from 'svelte/store';
   import RouterLink from '../components/RouterLink.svelte';
   import {
     Button,
@@ -22,8 +21,20 @@
 
   const queryClient = useQueryClient();
 
-  const statusFilter = writable<string>('');
-  const typeFilter = writable<string>('');
+  let statusFilter = $state('');
+  let typeFilter = $state('');
+
+  let searchInput = $state('');
+  let debouncedSearch = $state('');
+  let searchTimer: ReturnType<typeof setTimeout> | null = null;
+
+  function onSearchInput(value: string) {
+    searchInput = value;
+    if (searchTimer) clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => {
+      debouncedSearch = value.trim();
+    }, 500);
+  }
 
   const statusOptions = ['发酵中', '观察中', '已完成'];
 
@@ -32,23 +43,19 @@
     queryFn: fetchStatistics,
   });
 
-  const typeOptions = derived(statisticsQuery, ($q) =>
-    Object.keys($q.data?.type_counts ?? {}).sort(),
+  const typeOptions = $derived(
+    Object.keys($statisticsQuery.data?.type_counts ?? {}).sort(),
   );
 
-  const batchesQueryOptions = derived(
-    [statusFilter, typeFilter],
-    ([$status, $type]) => ({
-      queryKey: ['batches', { status: $status, type: $type }] as const,
-      queryFn: () =>
-        fetchBatches({
-          status: $status || undefined,
-          type: $type || undefined,
-        }),
-    }),
-  );
-
-  const batchesQuery = createQuery(batchesQueryOptions);
+  const batchesQuery = createQuery({
+    queryKey: ['batches', { status: statusFilter, type: typeFilter, search: debouncedSearch }],
+    queryFn: () =>
+      fetchBatches({
+        status: statusFilter || undefined,
+        type: typeFilter || undefined,
+        search: debouncedSearch || undefined,
+      }),
+  });
 
   let showForm = $state(false);
   let form = $state<BatchForm>({
@@ -202,12 +209,22 @@
 </script>
 
 <div class="space-y-6">
-  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
+  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6 sm:flex-wrap">
+    <div class="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-2">
+      <Label for="search-keyword" class="text-sm font-medium text-gray-700 whitespace-nowrap">关键字搜索</Label>
+      <Input
+        id="search-keyword"
+        value={searchInput}
+        oninput={(e) => onSearchInput((e.target as HTMLInputElement).value)}
+        placeholder="按批次类型模糊搜索"
+        class="sm:w-56"
+      />
+    </div>
     <div class="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-2">
       <Label for="filter-status" class="text-sm font-medium text-gray-700 whitespace-nowrap">发酵状态</Label>
       <select
         id="filter-status"
-        bind:value={$statusFilter}
+        bind:value={statusFilter}
         class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 sm:w-40"
       >
         <option value="">全部状态</option>
@@ -220,11 +237,11 @@
       <Label for="filter-type" class="text-sm font-medium text-gray-700 whitespace-nowrap">批次类型</Label>
       <select
         id="filter-type"
-        bind:value={$typeFilter}
+        bind:value={typeFilter}
         class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 sm:w-40"
       >
         <option value="">全部类型</option>
-        {#each $typeOptions as type}
+        {#each typeOptions as type}
           <option value={type}>{type}</option>
         {/each}
       </select>

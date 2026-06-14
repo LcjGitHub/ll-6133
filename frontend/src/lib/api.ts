@@ -20,10 +20,11 @@ const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
-/** 获取全部批次，可按状态和类型筛选 */
+/** 获取全部批次，可按状态、类型筛选，或按类型关键字模糊搜索 */
 export async function fetchBatches(params?: {
   status?: string;
   type?: string;
+  search?: string;
 }): Promise<Batch[]> {
   const { data } = await api.get<Batch[]>('/batches', { params });
   return data;
