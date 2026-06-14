@@ -79,10 +79,26 @@
     mutationFn: (payload: Partial<BatchForm>) => updateBatch(numericId, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['batch', id] });
-      queryClient.invalidateQueries({ queryKey: ['batches'] });
+      queryClient.invalidateQueries({ queryKey: ['batches'], exact: false });
+      queryClient.invalidateQueries({ queryKey: ['statistics'] });
       editMode = false;
     },
   });
+
+  const statusMutation_ = createMutation({
+    mutationFn: (status: string) => updateBatch(numericId, { status }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['batch', id] });
+      queryClient.invalidateQueries({ queryKey: ['batches'], exact: false });
+      queryClient.invalidateQueries({ queryKey: ['statistics'] });
+    },
+  });
+
+  function handleStatusChange(newStatus: string) {
+    const currentStatus = $batchQuery.data?.status;
+    if (newStatus === currentStatus) return;
+    $statusMutation_.mutate(newStatus);
+  }
 
   const noteMutation_ = createMutation({
     mutationFn: (content: string) => createNote(numericId, content),
@@ -197,10 +213,21 @@
   {:else if $batchQuery.data}
     {@const batch = $batchQuery.data}
 
-    <div class="flex items-center justify-between">
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <h2 class="text-lg font-semibold text-gray-800">{batch.type}</h2>
-      <div class="flex gap-2">
-        <Badge color={statusColor()} large>{batch.status}</Badge>
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div class="flex flex-wrap gap-2">
+          {#each statusOptions as status}
+            <Button
+              size="sm"
+              color={batch.status === status ? 'blue' : 'light'}
+              onclick={() => handleStatusChange(status)}
+              disabled={$statusMutation_.isPending || batch.status === status}
+            >
+              {$statusMutation_.isPending && batch.status !== status ? '切换中…' : status}
+            </Button>
+          {/each}
+        </div>
         <Button size="sm" color="light" onclick={() => (editMode = !editMode)}>
           {editMode ? '取消编辑' : '编辑'}
         </Button>
