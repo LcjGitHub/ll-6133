@@ -134,6 +134,26 @@ class Reminder(Base):
     batch: Mapped["Batch"] = relationship("Batch", back_populates="reminders")
 
 
+class Container(Base):
+    """发酵容器。"""
+
+    __tablename__ = "containers"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    name: Mapped[str] = mapped_column(String(200), nullable=False)
+    capacity_ml: Mapped[int] = mapped_column(Integer, nullable=False)
+    material: Mapped[str] = mapped_column(String(100), nullable=False)
+    in_use: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    current_batch_id: Mapped[int | None] = mapped_column(
+        Integer, ForeignKey("batches.id", ondelete="SET NULL"), nullable=True
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, nullable=False
+    )
+
+    current_batch: Mapped["Batch | None"] = relationship("Batch")
+
+
 class Strain(Base):
     """发酵菌种。"""
 

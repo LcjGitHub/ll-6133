@@ -15,6 +15,8 @@ import type {
   ImportResult,
   Strain,
   StrainForm,
+  Container,
+  ContainerForm,
   SearchResult,
   BackupSummary,
   BackupRestoreResult,
@@ -274,6 +276,32 @@ export async function updateStrain(
 /** 删除菌种 */
 export async function deleteStrain(id: number): Promise<void> {
   await api.delete(`/strains/${id}`);
+}
+
+/** 获取全部容器 */
+export async function fetchContainers(): Promise<Container[]> {
+  const { data } = await api.get<Container[]>('/containers');
+  return data;
+}
+
+/** 创建容器 */
+export async function createContainer(payload: ContainerForm): Promise<Container> {
+  const { data } = await api.post<Container>('/containers', payload);
+  return data;
+}
+
+/** 更新容器 */
+export async function updateContainer(
+  id: number,
+  payload: Partial<ContainerForm>,
+): Promise<Container> {
+  const { data } = await api.put<Container>(`/containers/${id}`, payload);
+  return data;
+}
+
+/** 删除容器 */
+export async function deleteContainer(id: number): Promise<void> {
+  await api.delete(`/containers/${id}`);
 }
 
 /** 全局搜索 */

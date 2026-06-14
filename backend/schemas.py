@@ -238,6 +238,40 @@ class StrainOut(BaseModel):
     created_at: datetime
 
 
+class ContainerCreate(BaseModel):
+    """创建容器请求体。"""
+
+    name: str = Field(..., min_length=1, max_length=200)
+    capacity_ml: int = Field(..., ge=1)
+    material: str = Field(..., min_length=1, max_length=100)
+    in_use: bool = False
+    current_batch_id: int | None = None
+
+
+class ContainerUpdate(BaseModel):
+    """更新容器请求体。"""
+
+    name: str | None = Field(None, min_length=1, max_length=200)
+    capacity_ml: int | None = Field(None, ge=1)
+    material: str | None = Field(None, min_length=1, max_length=100)
+    in_use: bool | None = None
+    current_batch_id: int | None = None
+
+
+class ContainerOut(BaseModel):
+    """容器响应。"""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    name: str
+    capacity_ml: int
+    material: str
+    in_use: bool
+    current_batch_id: int | None
+    created_at: datetime
+
+
 class SearchResultItem(BaseModel):
     """搜索结果基类。"""
 

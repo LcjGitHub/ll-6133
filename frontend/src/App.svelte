@@ -8,6 +8,7 @@
   import Overview from './pages/Overview.svelte';
   import ReminderList from './pages/ReminderList.svelte';
   import StrainList from './pages/StrainList.svelte';
+  import ContainerList from './pages/ContainerList.svelte';
   import Search from './pages/Search.svelte';
   import {
     initRouter,
@@ -17,6 +18,7 @@
     isOverview,
     isReminderList,
     isStrainList,
+    isContainerList,
     isSearch,
     pathname,
     navigate,
@@ -55,6 +57,10 @@
 
   function isSearchActive(path: string): boolean {
     return isSearch(path);
+  }
+
+  function isContainersActive(path: string): boolean {
+    return isContainerList(path);
   }
 </script>
 
@@ -123,6 +129,17 @@
             <button
               class={
                 'rounded-lg px-3 py-2 text-sm font-medium transition-colors ' +
+                (isContainersActive($pathname)
+                  ? 'bg-teal-100 text-teal-700'
+                  : 'text-gray-600 hover:bg-gray-100')
+              }
+              onclick={() => navigate('/containers')}
+            >
+              容器管理
+            </button>
+            <button
+              class={
+                'rounded-lg px-3 py-2 text-sm font-medium transition-colors ' +
                 (isSearchActive($pathname)
                   ? 'bg-rose-100 text-rose-700'
                   : 'text-gray-600 hover:bg-gray-100')
@@ -139,6 +156,8 @@
     <main class="mx-auto max-w-5xl px-4 py-6">
       {#if isSearch($pathname)}
         <Search />
+      {:else if isContainerList($pathname)}
+        <ContainerList />
       {:else if isOverview($pathname)}
         <Overview />
       {:else if isStrainList($pathname)}

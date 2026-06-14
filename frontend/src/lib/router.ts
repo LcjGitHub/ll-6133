@@ -85,3 +85,11 @@ export function isStrainList(path: string): boolean {
 export function isSearch(path: string): boolean {
   return path === '/search';
 }
+
+/**
+ * 判断是否为容器列表页。
+ * @param path - 当前路径
+ */
+export function isContainerList(path: string): boolean {
+  return path === '/containers';
+}

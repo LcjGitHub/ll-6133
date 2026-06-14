@@ -193,3 +193,23 @@ export interface BackupRestoreResult {
   message: string;
   summary: BackupSummary;
 }
+
+/** 发酵容器 */
+export interface Container {
+  id: number;
+  name: string;
+  capacity_ml: number;
+  material: string;
+  in_use: boolean;
+  current_batch_id: number | null;
+  created_at: string;
+}
+
+/** 创建/更新容器表单 */
+export interface ContainerForm {
+  name: string;
+  capacity_ml: number;
+  material: string;
+  in_use: boolean;
+  current_batch_id: number | null;
+}
