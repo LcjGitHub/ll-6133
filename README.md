@@ -72,6 +72,39 @@ npm run dev
 | POST | `/api/batches/{id}/notes` | 追加笔记 |
 | DELETE | `/api/notes/{id}` | 删除笔记 |
 
+## 单元测试
+
+后端接口自动化测试使用 **pytest + httpx(TestClient)**，每个测试用例使用独立的内存 SQLite 数据库，测试结束后自动清理，互不污染。
+
+### 安装测试依赖
+
+```bash
+cd backend
+python -m venv .venv
+
+# Windows
+.venv\Scripts\activate
+
+# macOS / Linux
+# source .venv/bin/activate
+
+pip install -r requirements.txt
+```
+
+### 运行全部测试
+
+```bash
+cd backend
+pytest -v
+```
+
+### 查看测试覆盖率（可选）
+
+```bash
+pip install pytest-cov
+pytest --cov=. --cov-report=term-missing
+```
+
 ## 说明
 
 - 依赖均在项目目录内安装，无需全局 pnpm/yarn
