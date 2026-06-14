@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 import models
 import schemas
-from database import get_db
+from database import get_db, write_change_log
 
 router = APIRouter(prefix="/api/recipes", tags=["配方"])
 
@@ -37,6 +37,8 @@ def create_recipe(payload: schemas.RecipeCreate, db: Session = Depends(get_db)):
 
     db.commit()
     db.refresh(recipe)
+    write_change_log(db, "create", "recipe", recipe.id, f"创建配方：{recipe.name}")
+    db.commit()
     return recipe
 
 
@@ -63,6 +65,11 @@ def update_recipe(
     update_data = payload.model_dump(exclude_unset=True)
     steps_data = update_data.pop("steps", None)
 
+    change_parts = [f"{k}={v}" for k, v in update_data.items()]
+    if steps_data is not None:
+        change_parts.append("steps")
+    summary = f"更新配方 #{recipe_id}：{', '.join(change_parts)}"
+
     for key, value in update_data.items():
         setattr(recipe, key, value)
 
@@ -81,6 +88,8 @@ def update_recipe(
 
     db.commit()
     db.refresh(recipe)
+    write_change_log(db, "update", "recipe", recipe_id, summary)
+    db.commit()
     return recipe
 
 
@@ -90,5 +99,8 @@ def delete_recipe(recipe_id: int, db: Session = Depends(get_db)):
     recipe = db.query(models.Recipe).filter(models.Recipe.id == recipe_id).first()
     if not recipe:
         raise HTTPException(status_code=404, detail="配方不存在")
+    recipe_name = recipe.name
     db.delete(recipe)
+    db.commit()
+    write_change_log(db, "delete", "recipe", recipe_id, f"删除配方：{recipe_name}")
     db.commit()

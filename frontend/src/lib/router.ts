@@ -93,3 +93,11 @@ export function isSearch(path: string): boolean {
 export function isContainerList(path: string): boolean {
   return path === '/containers';
 }
+
+/**
+ * 判断是否为变更记录页。
+ * @param path - 当前路径
+ */
+export function isChangeLogList(path: string): boolean {
+  return path === '/change-logs';
+}

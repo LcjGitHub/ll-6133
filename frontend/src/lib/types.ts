@@ -213,3 +213,21 @@ export interface ContainerForm {
   in_use: boolean;
   current_batch_id: number | null;
 }
+
+/** 变更记录 */
+export interface ChangeLog {
+  id: number;
+  operation: string;
+  entity: string;
+  entity_id: number;
+  summary: string;
+  created_at: string;
+}
+
+/** 变更记录分页列表响应 */
+export interface ChangeLogListResponse {
+  items: ChangeLog[];
+  total: number;
+  page: number;
+  page_size: number;
+}

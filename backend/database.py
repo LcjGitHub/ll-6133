@@ -1,5 +1,6 @@
 """数据库连接与会话管理。"""
 
+from datetime import datetime
 from pathlib import Path
 
 from sqlalchemy import create_engine
@@ -29,3 +30,17 @@ def get_db():
         yield db
     finally:
         db.close()
+
+
+def write_change_log(db, operation: str, entity: str, entity_id: int, summary: str):
+    """写入一条变更记录。"""
+    import models
+
+    log = models.ChangeLog(
+        operation=operation,
+        entity=entity,
+        entity_id=entity_id,
+        summary=summary,
+        created_at=datetime.utcnow(),
+    )
+    db.add(log)

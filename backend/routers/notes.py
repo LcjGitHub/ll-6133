@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 import models
 import schemas
-from database import get_db
+from database import get_db, write_change_log
 
 router = APIRouter(tags=["笔记"])
 
@@ -31,6 +31,8 @@ def create_note(
     db.add(note)
     db.commit()
     db.refresh(note)
+    write_change_log(db, "create", "note", note.id, f"为批次 #{batch_id} 添加笔记")
+    db.commit()
     return note
 
 
@@ -48,6 +50,8 @@ def update_note(
     note.content = payload.content
     db.commit()
     db.refresh(note)
+    write_change_log(db, "update", "note", note_id, f"更新笔记 #{note_id}（批次 #{note.batch_id}）")
+    db.commit()
     return note
 
 
@@ -57,5 +61,8 @@ def delete_note(note_id: int, db: Session = Depends(get_db)):
     note = db.query(models.Note).filter(models.Note.id == note_id).first()
     if not note:
         raise HTTPException(status_code=404, detail="笔记不存在")
+    batch_id = note.batch_id
     db.delete(note)
+    db.commit()
+    write_change_log(db, "delete", "note", note_id, f"删除笔记 #{note_id}（批次 #{batch_id}）")
     db.commit()

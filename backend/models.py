@@ -154,6 +154,21 @@ class Container(Base):
     current_batch: Mapped["Batch | None"] = relationship("Batch")
 
 
+class ChangeLog(Base):
+    """操作变更记录。"""
+
+    __tablename__ = "change_logs"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    operation: Mapped[str] = mapped_column(String(50), nullable=False)
+    entity: Mapped[str] = mapped_column(String(50), nullable=False)
+    entity_id: Mapped[int] = mapped_column(Integer, nullable=False)
+    summary: Mapped[str] = mapped_column(String(500), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, nullable=False
+    )
+
+
 class Strain(Base):
     """发酵菌种。"""
 

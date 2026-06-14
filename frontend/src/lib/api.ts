@@ -20,6 +20,7 @@ import type {
   SearchResult,
   BackupSummary,
   BackupRestoreResult,
+  ChangeLogListResponse,
 } from './types';
 
 const api = axios.create({
@@ -378,4 +379,13 @@ export async function restoreBackup(
     const message = await extractErrorDetail(error);
     throw new Error(message);
   }
+}
+
+/** 分页查询变更记录 */
+export async function fetchChangeLogs(params?: {
+  page?: number;
+  page_size?: number;
+}): Promise<ChangeLogListResponse> {
+  const { data } = await api.get<ChangeLogListResponse>('/change-logs', { params });
+  return data;
 }

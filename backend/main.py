@@ -17,6 +17,7 @@ from routers.strains import router as strains_router
 from routers.search import router as search_router
 from routers.backup import router as backup_router
 from routers.containers import router as containers_router
+from routers.changelogs import router as changelogs_router
 from seed import seed_data
 
 Base.metadata.create_all(bind=engine)
@@ -66,3 +67,4 @@ app.include_router(strains_router)
 app.include_router(search_router)
 app.include_router(backup_router)
 app.include_router(containers_router)
+app.include_router(changelogs_router)

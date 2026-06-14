@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 
 import models
 import schemas
-from database import get_db
+from database import get_db, write_change_log
 
 router = APIRouter(prefix="/api/batches", tags=["批次"])
 
@@ -42,6 +42,8 @@ def create_batch(payload: schemas.BatchCreate, db: Session = Depends(get_db)):
     db.add(batch)
     db.commit()
     db.refresh(batch)
+    write_change_log(db, "create", "batch", batch.id, f"创建批次：{batch.type}，状态：{batch.status}")
+    db.commit()
     return batch
 
 
@@ -253,11 +255,17 @@ def update_batch(
     if not batch:
         raise HTTPException(status_code=404, detail="批次不存在")
 
-    for key, value in payload.model_dump(exclude_unset=True).items():
+    changes = payload.model_dump(exclude_unset=True)
+    change_parts = [f"{k}={v}" for k, v in changes.items()]
+    summary = f"更新批次 #{batch_id}：{', '.join(change_parts)}"
+
+    for key, value in changes.items():
         setattr(batch, key, value)
 
     db.commit()
     db.refresh(batch)
+    write_change_log(db, "update", "batch", batch_id, summary)
+    db.commit()
     return batch
 
 
@@ -267,5 +275,8 @@ def delete_batch(batch_id: int, db: Session = Depends(get_db)):
     batch = db.query(models.Batch).filter(models.Batch.id == batch_id).first()
     if not batch:
         raise HTTPException(status_code=404, detail="批次不存在")
+    batch_type = batch.type
     db.delete(batch)
+    db.commit()
+    write_change_log(db, "delete", "batch", batch_id, f"删除批次：{batch_type}")
     db.commit()

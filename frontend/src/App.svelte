@@ -10,6 +10,7 @@
   import StrainList from './pages/StrainList.svelte';
   import ContainerList from './pages/ContainerList.svelte';
   import Search from './pages/Search.svelte';
+  import ChangeLogList from './pages/ChangeLogList.svelte';
   import {
     initRouter,
     parseBatchId,
@@ -20,6 +21,7 @@
     isStrainList,
     isContainerList,
     isSearch,
+    isChangeLogList,
     pathname,
     navigate,
   } from './lib/router';
@@ -61,6 +63,10 @@
 
   function isContainersActive(path: string): boolean {
     return isContainerList(path);
+  }
+
+  function isChangeLogsActive(path: string): boolean {
+    return isChangeLogList(path);
   }
 </script>
 
@@ -148,13 +154,26 @@
             >
               🔍 搜索
             </button>
+            <button
+              class={
+                'rounded-lg px-3 py-2 text-sm font-medium transition-colors ' +
+                (isChangeLogsActive($pathname)
+                  ? 'bg-indigo-100 text-indigo-700'
+                  : 'text-gray-600 hover:bg-gray-100')
+              }
+              onclick={() => navigate('/change-logs')}
+            >
+              变更记录
+            </button>
           </nav>
         </div>
       </div>
     </header>
 
     <main class="mx-auto max-w-5xl px-4 py-6">
-      {#if isSearch($pathname)}
+      {#if isChangeLogList($pathname)}
+        <ChangeLogList />
+      {:else if isSearch($pathname)}
         <Search />
       {:else if isContainerList($pathname)}
         <ContainerList />

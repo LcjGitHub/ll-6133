@@ -339,3 +339,25 @@ class BackupRestoreResult(BaseModel):
     success: bool
     message: str
     summary: BackupSummary
+
+
+class ChangeLogOut(BaseModel):
+    """变更记录响应。"""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    operation: str
+    entity: str
+    entity_id: int
+    summary: str
+    created_at: datetime
+
+
+class ChangeLogListResponse(BaseModel):
+    """变更记录分页列表响应。"""
+
+    items: list[ChangeLogOut]
+    total: int
+    page: int
+    page_size: int
