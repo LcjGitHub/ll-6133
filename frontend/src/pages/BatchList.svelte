@@ -408,6 +408,7 @@
         <TableHead>
           <TableHeadCell>类型</TableHeadCell>
           <TableHeadCell>开始日期</TableHeadCell>
+          <TableHeadCell>发酵天数</TableHeadCell>
           <TableHeadCell>温度</TableHeadCell>
           <TableHeadCell>状态</TableHeadCell>
           <TableHeadCell>pH</TableHeadCell>
@@ -425,6 +426,11 @@
                 </RouterLink>
               </TableBodyCell>
               <TableBodyCell>{batch.start_date}</TableBodyCell>
+              <TableBodyCell>
+                <span class="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
+                  {batch.fermentation_days} 天
+                </span>
+              </TableBodyCell>
               <TableBodyCell>{batch.temperature}°C</TableBodyCell>
               <TableBodyCell>
                 <Badge color={statusColor()}>{batch.status}</Badge>

@@ -36,6 +36,11 @@ class Batch(Base):
         "Reminder", back_populates="batch", cascade="all, delete-orphan"
     )
 
+    @property
+    def fermentation_days(self) -> int:
+        """已发酵天数：从开始日期到当前日期的天数差。"""
+        return (date.today() - self.start_date).days
+
 
 class Note(Base):
     """观察笔记。"""

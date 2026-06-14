@@ -81,6 +81,7 @@ class BatchOut(BaseModel):
     status: str
     ph: float | None
     created_at: datetime
+    fermentation_days: int
 
 
 class BatchDetail(BatchOut):

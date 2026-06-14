@@ -7,6 +7,7 @@ export interface Batch {
   status: string;
   ph: number | null;
   created_at: string;
+  fermentation_days: number;
 }
 
 /** 观察笔记 */

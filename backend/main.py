@@ -85,7 +85,7 @@ def export_batches(db: Session = Depends(get_db)):
 
     ws_batches = wb.active
     ws_batches.title = "批次"
-    batch_headers = ["编号", "类型", "开始日期", "温度(°C)", "状态", "pH", "创建时间"]
+    batch_headers = ["编号", "类型", "开始日期", "发酵天数", "温度(°C)", "状态", "pH", "创建时间"]
     header_font = Font(bold=True, color="FFFFFF")
     header_fill = PatternFill(start_color="4472C4", end_color="4472C4", fill_type="solid")
     header_align = Alignment(horizontal="center", vertical="center")
@@ -101,12 +101,13 @@ def export_batches(db: Session = Depends(get_db)):
         ws_batches.cell(row=row_idx, column=1, value=batch.id)
         ws_batches.cell(row=row_idx, column=2, value=batch.type)
         ws_batches.cell(row=row_idx, column=3, value=batch.start_date.isoformat())
-        ws_batches.cell(row=row_idx, column=4, value=batch.temperature)
-        ws_batches.cell(row=row_idx, column=5, value=batch.status)
-        ws_batches.cell(row=row_idx, column=6, value=batch.ph if batch.ph is not None else "")
-        ws_batches.cell(row=row_idx, column=7, value=batch.created_at.strftime("%Y-%m-%d %H:%M:%S"))
+        ws_batches.cell(row=row_idx, column=4, value=batch.fermentation_days)
+        ws_batches.cell(row=row_idx, column=5, value=batch.temperature)
+        ws_batches.cell(row=row_idx, column=6, value=batch.status)
+        ws_batches.cell(row=row_idx, column=7, value=batch.ph if batch.ph is not None else "")
+        ws_batches.cell(row=row_idx, column=8, value=batch.created_at.strftime("%Y-%m-%d %H:%M:%S"))
 
-    batch_col_widths = [8, 16, 14, 12, 12, 10, 22]
+    batch_col_widths = [8, 16, 14, 12, 12, 12, 10, 22]
     for i, width in enumerate(batch_col_widths, 1):
         ws_batches.column_dimensions[get_column_letter(i)].width = width
 

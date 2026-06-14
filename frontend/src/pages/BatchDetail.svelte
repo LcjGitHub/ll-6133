@@ -254,10 +254,18 @@
       </Card>
     {:else}
       <Card class="max-w-none">
-        <dl class="grid grid-cols-2 gap-4 sm:grid-cols-4">
+        <dl class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
           <div>
             <dt class="text-sm text-gray-500">开始日期</dt>
             <dd class="font-medium">{batch.start_date}</dd>
+          </div>
+          <div>
+            <dt class="text-sm text-gray-500">已发酵天数</dt>
+            <dd class="font-medium">
+              <span class="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
+                {batch.fermentation_days} 天
+              </span>
+            </dd>
           </div>
           <div>
             <dt class="text-sm text-gray-500">温度</dt>
