@@ -71,6 +71,7 @@ lerna-debug.log*
 .env
 .env.*
 !.env.example
+!**/.env.example
 *.local
 
 # IDE / editor
@@ -129,6 +130,12 @@ tmp/
 
 # Text files
 *.txt
+!requirements.txt
+!**/requirements.txt
+!README.txt
+!LICENSE.txt
+!CHANGELOG.txt
+!CONTRIBUTING.txt
 
 # App data
 history_snapshots.json
