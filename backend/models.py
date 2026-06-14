@@ -38,8 +38,9 @@ class Batch(Base):
 
     @property
     def fermentation_days(self) -> int:
-        """已发酵天数：从开始日期到当前日期的天数差。"""
-        return (date.today() - self.start_date).days
+        """已发酵天数：开始当天为第 1 天，未来开始日期最少显示 0 天。"""
+        days = (date.today() - self.start_date).days + 1
+        return max(days, 0)
 
 
 class Note(Base):
