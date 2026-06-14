@@ -7,7 +7,6 @@
     Label,
     Select,
     Textarea,
-    Badge,
     Spinner,
     Alert,
     Card,
@@ -39,6 +38,7 @@
   let editingNoteId = $state<number | null>(null);
   let editingNoteContent = $state('');
   let updateNoteError = $state<string>('');
+  let statusError = $state<string>('');
 
   function defaultMeasurementForm(): MeasurementForm {
     const now = new Date();
@@ -85,18 +85,30 @@
     },
   });
 
+  let pendingStatus = $state<string | null>(null);
+
   const statusMutation_ = createMutation({
     mutationFn: (status: string) => updateBatch(numericId, { status }),
+    onMutate: (status: string) => {
+      pendingStatus = status;
+      statusError = '';
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['batch', id] });
       queryClient.invalidateQueries({ queryKey: ['batches'], exact: false });
       queryClient.invalidateQueries({ queryKey: ['statistics'] });
     },
+    onError: async (error) => {
+      statusError = await extractErrorDetail(error);
+    },
+    onSettled: () => {
+      pendingStatus = null;
+    },
   });
 
   function handleStatusChange(newStatus: string) {
     const currentStatus = $batchQuery.data?.status;
-    if (newStatus === currentStatus) return;
+    if (newStatus === currentStatus || pendingStatus !== null) return;
     $statusMutation_.mutate(newStatus);
   }
 
@@ -191,10 +203,6 @@
     return new Date(iso).toLocaleString('zh-CN');
   }
 
-  /** 状态徽章颜色 */
-  function statusColor(): 'dark' {
-    return 'dark';
-  }
 </script>
 
 <div class="space-y-6">
@@ -222,9 +230,9 @@
               size="sm"
               color={batch.status === status ? 'blue' : 'light'}
               onclick={() => handleStatusChange(status)}
-              disabled={$statusMutation_.isPending || batch.status === status}
+              disabled={pendingStatus !== null || batch.status === status}
             >
-              {$statusMutation_.isPending && batch.status !== status ? '切换中…' : status}
+              {pendingStatus === status ? '切换中…' : status}
             </Button>
           {/each}
         </div>
@@ -233,6 +241,10 @@
         </Button>
       </div>
     </div>
+
+    {#if statusError}
+      <Alert color="red">状态切换失败：{statusError}</Alert>
+    {/if}
 
     {#if editMode}
       <Card class="max-w-none">
